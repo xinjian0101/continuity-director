@@ -1,0 +1,4 @@
+tests/
+scripts/
+.github/
+examples/demo-output.json

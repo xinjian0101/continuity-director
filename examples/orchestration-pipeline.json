@@ -1,0 +1,21 @@
+{
+  "workflow_template": {
+    "template_id": "local-video-workflow",
+    "nodes": [
+      {"node_id": "prompt", "class_type": "CLIPTextEncode", "inputs": {"text": "${positive_prompt}"}},
+      {"node_id": "sampler", "class_type": "KSampler", "inputs": {"seed": "${seed}", "steps": 24}}
+    ]
+  },
+  "quality_gate": {
+    "gate_id": "production",
+    "pass_score": 78,
+    "warning_score": 65,
+    "max_remakes": 2,
+    "dimensions": {
+      "identity_consistency": {"threshold": 82, "weight": 3, "required": true},
+      "temporal_stability": {"threshold": 75, "weight": 2, "required": true},
+      "prompt_alignment": {"threshold": 70, "weight": 1, "required": true},
+      "transition_match": {"threshold": 72, "weight": 2, "required": true}
+    }
+  }
+}

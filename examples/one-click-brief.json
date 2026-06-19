@@ -1,0 +1,45 @@
+{
+  "project": {
+    "project_name": "地下车库短片",
+    "master_seed": 20260619,
+    "aspect_ratio": "9:16",
+    "fps": 24,
+    "visual_style": "cinematic realistic photography, natural skin texture",
+    "color_palette": "cold gray with restrained red accents",
+    "lighting_rule": "stable cold ceiling light and red rim light from camera right"
+  },
+  "character": {
+    "character_id": "hero-01",
+    "display_name": "林默",
+    "identity_description": "20-year-old Chinese man, recognizable natural face",
+    "face_features": "oval face, straight eyebrows, small scar near right eyebrow",
+    "hair": "short slightly messy black hair",
+    "body_features": "slim athletic build",
+    "default_wardrobe": "dark charcoal hooded jacket, black T-shirt, dark cargo pants",
+    "signature_props": "silver analog watch on left wrist",
+    "immutable_rules": "scar remains on right eyebrow, watch remains on left wrist"
+  },
+  "scene": {
+    "scene_id": "garage-01",
+    "location": "abandoned underground parking garage",
+    "time_of_day": "late night",
+    "weather": "heavy rain outside",
+    "lighting": "cold fluorescent lights, weak red emergency light from camera right",
+    "environment_details": "wet floor, numbered pillars, damaged sedan at pillar B7",
+    "screen_direction": "moves screen left to screen right",
+    "persistent_objects": "damaged sedan, red fire cabinet, yellow floor line"
+  },
+  "shot": {
+    "shot_id": "shot-001",
+    "duration_seconds": 5,
+    "action": "walks toward the damaged sedan and raises a flashlight",
+    "emotion": "restrained tension",
+    "camera_shot": "medium shot",
+    "camera_move": "slow dolly in",
+    "lens": "35mm",
+    "composition": "character on left third, sedan in background",
+    "motion_rules": "natural walking pace, stable hands",
+    "allowed_changes": "emotion, position",
+    "position": "near pillar B6, facing screen right"
+  }
+}
