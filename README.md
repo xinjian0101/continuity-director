@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/xinjian0101/continuity-director/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xinjian0101/continuity-director/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/xinjian0101/continuity-director/releases"><img alt="Version" src="https://img.shields.io/badge/version-0.8.21-2563eb"></a>
+  <a href="https://github.com/xinjian0101/continuity-director/releases"><img alt="Version" src="https://img.shields.io/badge/version-0.8.22-2563eb"></a>
   <img alt="Nodes" src="https://img.shields.io/badge/nodes-20-0f766e">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10--3.12-3776ab">
   <a href="https://github.com/xinjian0101/continuity-director/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/xinjian0101/continuity-director"></a>
@@ -29,7 +29,8 @@ Continuity Director is a public, installable ComfyUI custom-node package for rep
 | Repository visibility | Public |
 | Primary maintainer | [@xinjian0101](https://github.com/xinjian0101) |
 | Maintenance model | Active maintainer-led open source |
-| Current release | [`v0.8.21`](https://github.com/xinjian0101/continuity-director/releases) maintained preview |
+| Current release | [`v0.8.22`](https://github.com/xinjian0101/continuity-director/releases) maintained preview |
+| Latest maintenance | Size-aware starter-chain layout, frontend version consistency, and dynamic release artifact naming |
 | Governance | [GOVERNANCE.md](GOVERNANCE.md) |
 | Maintainers | [MAINTAINERS.md](MAINTAINERS.md) |
 | Roadmap | [ROADMAP.md](ROADMAP.md) |
@@ -68,7 +69,7 @@ flowchart LR
     V[Retry / Checkpoint / Environment Lock] --> E
 ```
 
-The dashboard action **Add starter chain** inserts and connects the primary production path.
+The dashboard action **Add starter chain** inserts and connects the primary production path using a size-aware layout that avoids node overlap.
 
 ## Node map
 
@@ -102,7 +103,7 @@ Restart ComfyUI, then search for nodes beginning with `CD ·` or open the **Cont
 
 ### Release ZIP
 
-Download `continuity-director-v0.8.21.zip` and its checksum from [GitHub Releases](https://github.com/xinjian0101/continuity-director/releases). Extract the included `ComfyUI-ContinuityDirector` folder into `ComfyUI/custom_nodes`, then restart ComfyUI.
+Download `continuity-director-v0.8.22.zip` and its checksum from [GitHub Releases](https://github.com/xinjian0101/continuity-director/releases). Extract the included `ComfyUI-ContinuityDirector` folder into `ComfyUI/custom_nodes`, then restart ComfyUI.
 
 ### Update
 
@@ -117,7 +118,7 @@ git pull
 python scripts/build_release.py
 ```
 
-Output: `dist/continuity-director-v0.8.21.zip`.
+Output: `dist/continuity-director-v0.8.22.zip`.
 
 ## First production run
 
