@@ -50,14 +50,7 @@ def verify_hashed_payload(payload: Any) -> dict[str, Any]:
         reason = "hash-mismatch"
     else:
         reason = "valid"
-    return {
-        "valid": valid,
-        "reason": reason,
-        "hash_format_valid": valid_format,
-        "supplied_hash": supplied,
-        "expected_hash": expected,
-        "schema": data.get("schema"),
-    }
+    return {"valid": valid, "reason": reason, "hash_format_valid": valid_format, "supplied_hash": supplied, "expected_hash": expected, "schema": data.get("schema")}
 
 
 def migrate_payload(payload: Any, target_version: str = "1.0") -> tuple[dict[str, Any], list[dict[str, str]]]:
@@ -98,14 +91,7 @@ def retry_policy(max_attempts: int, base_delay_seconds: float, multiplier: float
             delay = ceiling
         else:
             delay = min(ceiling, delay * factor)
-    policy = {
-        "schema": "continuity-director/retry-policy@1.0",
-        "max_attempts": attempts,
-        "base_delay_seconds": base,
-        "multiplier": factor,
-        "max_delay_seconds": ceiling,
-        "delays_seconds": delays,
-    }
+    policy = {"schema": "continuity-director/retry-policy@1.0", "max_attempts": attempts, "base_delay_seconds": base, "multiplier": factor, "max_delay_seconds": ceiling, "delays_seconds": delays}
     policy["hash"] = digest(policy)
     return policy
 
@@ -153,10 +139,8 @@ def queue_checkpoint(execution_plan: Any, completed_ids: Any = None, failed_ids:
     plan = parse_json(execution_plan, default={}, expected=dict)
     order = _plan_task_order(plan)
     known = set(order)
-    completed_list = _checkpoint_ids(completed_ids, "completed_ids")
-    failed_list = _checkpoint_ids(failed_ids, "failed_ids")
-    completed = set(completed_list)
-    failed = set(failed_list)
+    completed = set(_checkpoint_ids(completed_ids, "completed_ids"))
+    failed = set(_checkpoint_ids(failed_ids, "failed_ids"))
     overlap = sorted(completed & failed)
     if overlap:
         raise ContinuityError(f"Tasks cannot be both completed and failed: {', '.join(overlap)}")
@@ -164,15 +148,7 @@ def queue_checkpoint(execution_plan: Any, completed_ids: Any = None, failed_ids:
     if unknown:
         raise ContinuityError(f"Unknown checkpoint task ids: {', '.join(unknown)}")
     remaining = [task_id for task_id in order if task_id not in completed and task_id not in failed]
-    checkpoint = {
-        "schema": "continuity-director/queue-checkpoint@1.0",
-        "plan_hash": str(plan.get("hash", "")),
-        "created_at": utc_now(),
-        "completed": [task_id for task_id in order if task_id in completed],
-        "failed": [task_id for task_id in order if task_id in failed],
-        "remaining": remaining,
-        "remaining_count": len(remaining),
-    }
+    checkpoint = {"schema": "continuity-director/queue-checkpoint@1.0", "plan_hash": str(plan.get("hash", "")), "created_at": utc_now(), "completed": [task_id for task_id in order if task_id in completed], "failed": [task_id for task_id in order if task_id in failed], "remaining": remaining, "remaining_count": len(remaining)}
     checkpoint["hash"] = digest(checkpoint)
     return checkpoint
 
@@ -184,17 +160,45 @@ def idempotency_key(namespace: str, payload: Any) -> tuple[str, str]:
     return key, canonical
 
 
-def environment_lock(comfyui_version: str, frontend_version: str, models: Any = None, notes: str = "") -> dict[str, Any]:
+def _clean_version(value: Any) -> str:
+    text = str(value or "").strip()
+    return text or "unknown"
+
+
+def _normalize_models(models: Any) -> Any:
     model_data = parse_json(models, default=[], expected=(list, dict))
+    if isinstance(model_data, dict):
+        return copy.deepcopy(model_data)
+    normalized: list[Any] = []
+    seen: set[str] = set()
+    for index, item in enumerate(model_data, start=1):
+        if isinstance(item, str):
+            cleaned: Any = item.strip()
+            if not cleaned:
+                continue
+        elif isinstance(item, dict):
+            cleaned = copy.deepcopy(item)
+        else:
+            raise ContinuityError(f"Model inventory item {index} must be a string or object")
+        key = stable_json(cleaned)
+        if key not in seen:
+            seen.add(key)
+            normalized.append(cleaned)
+    normalized.sort(key=stable_json)
+    return normalized
+
+
+def environment_lock(comfyui_version: str, frontend_version: str, models: Any = None, notes: str = "") -> dict[str, Any]:
     lock = {
         "schema": "continuity-director/environment-lock@1.0",
         "python": platform.python_version(),
         "python_implementation": platform.python_implementation(),
         "platform": sys.platform,
-        "comfyui_version": str(comfyui_version).strip(),
-        "frontend_version": str(frontend_version).strip(),
-        "models": model_data,
-        "notes": str(notes).strip(),
+        "platform_machine": platform.machine() or "unknown",
+        "comfyui_version": _clean_version(comfyui_version),
+        "frontend_version": _clean_version(frontend_version),
+        "models": _normalize_models(models),
+        "notes": str(notes or "").strip(),
     }
     lock["hash"] = digest(lock)
     return lock
