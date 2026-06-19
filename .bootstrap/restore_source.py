@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import codecs
 import hashlib
-import os
 import shutil
 import subprocess
 import sys
@@ -67,7 +66,10 @@ def restore() -> None:
     run(sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_*.py", cwd=SOURCE)
     run(sys.executable, "scripts/validate_release.py", cwd=SOURCE)
 
-    run("rsync", "-a", "--delete", "--exclude", ".git", f"{SOURCE}/", f"{ROOT}/")
+    run(
+        "rsync", "-a", "--delete", "--exclude", ".git",
+        "--exclude", ".github/workflows", f"{SOURCE}/", f"{ROOT}/",
+    )
     publish("chore: restore complete v0.7.0 source tree")
 
 
