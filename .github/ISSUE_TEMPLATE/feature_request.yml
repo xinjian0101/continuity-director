@@ -1,0 +1,60 @@
+name: Feature request
+description: Propose a focused improvement to Continuity Director
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Production problem
+      description: What workflow problem should this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the expected user-facing behavior.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Interface and localization
+        - Continuity data
+        - Batch directing
+        - Runtime and queues
+        - Quality review
+        - Collaboration
+        - Distributed workers
+        - Post-production
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility considerations
+      description: Note any workflow, schema, node identifier, or migration impact.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues and pull requests.
+          required: true
+        - label: This request does not require storing API keys or credentials in project files.
+          required: true
