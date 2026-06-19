@@ -96,22 +96,66 @@ def retry_policy(max_attempts: int, base_delay_seconds: float, multiplier: float
     return policy
 
 
+def _checkpoint_ids(value: Any, field: str) -> list[str]:
+    values = parse_json(value, default=[], expected=list)
+    output: list[str] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(values, start=1):
+        task_id = normalize_id(raw, "")
+        if not task_id:
+            raise ContinuityError(f"{field} item {index} must contain a task id")
+        if task_id not in seen:
+            seen.add(task_id)
+            output.append(task_id)
+    return output
+
+
+def _plan_task_order(plan: dict[str, Any]) -> list[str]:
+    waves = plan.get("waves", [])
+    if not isinstance(waves, list):
+        raise ContinuityError("Execution plan waves must be a list")
+    order: list[str] = []
+    seen: set[str] = set()
+    for wave_index, wave in enumerate(waves, start=1):
+        if not isinstance(wave, dict):
+            raise ContinuityError(f"Execution plan wave {wave_index} must be an object")
+        tasks = wave.get("tasks", [])
+        if not isinstance(tasks, list):
+            raise ContinuityError(f"Execution plan wave {wave_index} tasks must be a list")
+        for task_index, task in enumerate(tasks, start=1):
+            if not isinstance(task, dict):
+                raise ContinuityError(f"Execution plan wave {wave_index} task {task_index} must be an object")
+            task_id = normalize_id(task.get("task_id"), "")
+            if not task_id:
+                raise ContinuityError(f"Execution plan wave {wave_index} task {task_index} is missing task_id")
+            if task_id in seen:
+                raise ContinuityError(f"Duplicate execution plan task id: {task_id}")
+            seen.add(task_id)
+            order.append(task_id)
+    return order
+
+
 def queue_checkpoint(execution_plan: Any, completed_ids: Any = None, failed_ids: Any = None) -> dict[str, Any]:
     plan = parse_json(execution_plan, default={}, expected=dict)
-    completed = {normalize_id(value) for value in parse_json(completed_ids, default=[], expected=list)}
-    failed = {normalize_id(value) for value in parse_json(failed_ids, default=[], expected=list)}
-    tasks = [task for wave in plan.get("waves", []) for task in wave.get("tasks", [])]
-    known = {normalize_id(task.get("task_id")) for task in tasks}
+    order = _plan_task_order(plan)
+    known = set(order)
+    completed_list = _checkpoint_ids(completed_ids, "completed_ids")
+    failed_list = _checkpoint_ids(failed_ids, "failed_ids")
+    completed = set(completed_list)
+    failed = set(failed_list)
+    overlap = sorted(completed & failed)
+    if overlap:
+        raise ContinuityError(f"Tasks cannot be both completed and failed: {', '.join(overlap)}")
     unknown = sorted((completed | failed) - known)
     if unknown:
         raise ContinuityError(f"Unknown checkpoint task ids: {', '.join(unknown)}")
-    remaining = [task_id for task_id in sorted(known) if task_id not in completed and task_id not in failed]
+    remaining = [task_id for task_id in order if task_id not in completed and task_id not in failed]
     checkpoint = {
         "schema": "continuity-director/queue-checkpoint@1.0",
-        "plan_hash": plan.get("hash", ""),
+        "plan_hash": str(plan.get("hash", "")),
         "created_at": utc_now(),
-        "completed": sorted(completed),
-        "failed": sorted(failed),
+        "completed": [task_id for task_id in order if task_id in completed],
+        "failed": [task_id for task_id in order if task_id in failed],
         "remaining": remaining,
         "remaining_count": len(remaining),
     }
