@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import math
 import platform
 import re
 import sys
@@ -11,6 +12,24 @@ from typing import Any
 from .continuity_core import ContinuityError, digest, normalize_id, parse_json, stable_json, utc_now
 
 _VERSION_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+
+
+def _bounded_int(value: Any, field: str, minimum: int, maximum: int) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise ContinuityError(f"{field} must be an integer") from exc
+    return max(minimum, min(maximum, number))
+
+
+def _finite_float(value: Any, field: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ContinuityError(f"{field} must be numeric") from exc
+    if not math.isfinite(number):
+        raise ContinuityError(f"{field} must be finite")
+    return number
 
 
 def verify_hashed_payload(payload: Any) -> dict[str, Any]:
@@ -51,11 +70,20 @@ def migrate_payload(payload: Any, target_version: str = "1.0") -> tuple[dict[str
 
 
 def retry_policy(max_attempts: int, base_delay_seconds: float, multiplier: float, max_delay_seconds: float) -> dict[str, Any]:
-    attempts = max(1, min(100, int(max_attempts)))
-    base = max(0.0, float(base_delay_seconds))
-    factor = max(1.0, float(multiplier))
-    ceiling = max(base, float(max_delay_seconds))
-    delays = [round(min(ceiling, base * (factor ** index)), 6) for index in range(max(0, attempts - 1))]
+    attempts = _bounded_int(max_attempts, "max_attempts", 1, 100)
+    base = max(0.0, _finite_float(base_delay_seconds, "base_delay_seconds"))
+    factor = max(1.0, min(10.0, _finite_float(multiplier, "multiplier")))
+    ceiling = max(base, max(0.0, _finite_float(max_delay_seconds, "max_delay_seconds")))
+    delays: list[float] = []
+    delay = min(base, ceiling)
+    for _ in range(max(0, attempts - 1)):
+        delays.append(round(delay, 6))
+        if delay >= ceiling or factor == 1.0:
+            delay = ceiling if delay >= ceiling else delay
+        elif delay > ceiling / factor:
+            delay = ceiling
+        else:
+            delay = min(ceiling, delay * factor)
     policy = {
         "schema": "continuity-director/retry-policy@1.0",
         "max_attempts": attempts,
