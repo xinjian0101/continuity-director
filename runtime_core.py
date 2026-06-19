@@ -76,7 +76,18 @@ def dependency_waves(tasks: Any, max_parallel: int = 4) -> list[list[dict[str, A
 
 def build_execution_plan(shot_chain: Any, max_parallel: int = 4) -> dict[str, Any]:
     chain = parse_json(shot_chain, default={}, expected=dict)
-    waves = dependency_waves(chain.get("takes", []), max_parallel=max_parallel)
-    plan = {"schema": "continuity-director/execution-plan@1.0", "source_hash": chain.get("hash", ""), "max_parallel": int(max_parallel), "task_count": sum(len(wave) for wave in waves), "wave_count": len(waves), "waves": [{"wave": index + 1, "tasks": wave} for index, wave in enumerate(waves)]}
+    parallelism = _bounded_int(max_parallel, "max_parallel", 1, 64)
+    tasks = chain.get("takes", [])
+    if not isinstance(tasks, list):
+        raise ContinuityError("Shot chain takes must be a list")
+    waves = dependency_waves(tasks, max_parallel=parallelism)
+    plan = {
+        "schema": "continuity-director/execution-plan@1.0",
+        "source_hash": str(chain.get("hash", "")),
+        "max_parallel": parallelism,
+        "task_count": sum(len(wave) for wave in waves),
+        "wave_count": len(waves),
+        "waves": [{"wave": index + 1, "tasks": wave} for index, wave in enumerate(waves)],
+    }
     plan["hash"] = digest(plan)
     return plan
