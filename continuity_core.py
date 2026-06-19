@@ -81,8 +81,44 @@ def build_lock(kind: str, item_id: str, payload: dict[str, Any], *, schema_versi
     return body
 
 
+def _validated_lock(value: Any, kind: str, position: int) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ContinuityError(f"{kind.title()} lock {position} must be an object")
+    item_id = str(value.get("id", "")).strip()
+    if not item_id:
+        raise ContinuityError(f"{kind.title()} lock {position} is missing id")
+    supplied_kind = str(value.get("kind", kind)).strip()
+    if supplied_kind and supplied_kind != kind:
+        raise ContinuityError(f"Expected {kind} lock, received {supplied_kind} at position {position}")
+    return copy.deepcopy(value)
+
+
+def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
+    if values is None:
+        return []
+    if not isinstance(values, (list, tuple)):
+        raise ContinuityError(f"{kind.title()} locks must be a list")
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for position, value in enumerate(values, start=1):
+        item = _validated_lock(value, kind, position)
+        item_id = normalize_id(item["id"], kind)
+        if item_id in seen:
+            raise ContinuityError(f"Duplicate {kind} lock id: {item_id}")
+        seen.add(item_id)
+        output.append(item)
+    return output
+
+
 def build_manifest(project: dict[str, Any], characters: list[dict[str, Any]] | None = None, scenes: list[dict[str, Any]] | None = None, shots: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    manifest = {"schema": "continuity-director/manifest@1.0", "project": copy.deepcopy(project), "characters": copy.deepcopy(characters or []), "scenes": copy.deepcopy(scenes or []), "shots": copy.deepcopy(shots or [])}
+    project_lock = _validated_lock(project, "project", 1)
+    manifest = {
+        "schema": "continuity-director/manifest@1.0",
+        "project": project_lock,
+        "characters": _lock_collection(characters, "character"),
+        "scenes": _lock_collection(scenes, "scene"),
+        "shots": _lock_collection(shots, "shot"),
+    }
     manifest["hash"] = digest(manifest)
     return manifest
 
