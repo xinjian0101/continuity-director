@@ -1,0 +1,23 @@
+{
+  "shots": [
+    {
+      "id": "shot-001",
+      "scene_id": "scene-apartment",
+      "character_ids": ["lead"],
+      "prompt": "The lead enters a quiet apartment and pauses beside the window.",
+      "negative_prompt": "identity drift, wardrobe change, incorrect room layout",
+      "duration_seconds": 3.5,
+      "camera": {"framing": "medium wide", "movement": "slow push in", "lens": "35mm"}
+    },
+    {
+      "id": "shot-002",
+      "scene_id": "scene-apartment",
+      "character_ids": ["lead"],
+      "prompt": "The lead turns toward a sound from the hallway while preserving pose and wardrobe continuity.",
+      "negative_prompt": "identity drift, changed lighting direction, changed furniture",
+      "duration_seconds": 3.0,
+      "depends_on": ["shot-001-take-01"],
+      "camera": {"framing": "medium close-up", "movement": "locked", "lens": "50mm"}
+    }
+  ]
+}
