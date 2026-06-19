@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import math
 from collections.abc import Iterable, Mapping
 from typing import Any
 
@@ -12,26 +13,35 @@ DEFAULT_WEIGHTS = {"identity": 0.35, "continuity": 0.25, "technical": 0.20, "mot
 DEFAULT_THRESHOLDS = {"identity": 0.78, "continuity": 0.72, "technical": 0.70}
 
 
+def _finite_number(value: Any, field: str) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ContinuityError(f"{field} must be numeric") from exc
+    if not math.isfinite(number):
+        raise ContinuityError(f"{field} must be finite")
+    return number
+
+
 def _clamp(value: Any, minimum: float = 0.0, maximum: float = 1.0) -> float:
     try:
         number = float(value)
     except (TypeError, ValueError):
-        number = 0.0
+        return minimum
+    if not math.isfinite(number):
+        return minimum
     return max(minimum, min(maximum, number))
 
 
 def _integer(value: Any, field: str) -> int:
     try:
         return int(value)
-    except (TypeError, ValueError) as exc:
+    except (TypeError, ValueError, OverflowError) as exc:
         raise ContinuityError(f"{field} must be an integer") from exc
 
 
 def _duration(value: Any, shot_number: int) -> float:
-    try:
-        duration = float(value)
-    except (TypeError, ValueError) as exc:
-        raise ContinuityError(f"Shot {shot_number} duration_seconds must be numeric") from exc
+    duration = _finite_number(value, f"Shot {shot_number} duration_seconds")
     if duration <= 0.0 or duration > 600.0:
         raise ContinuityError(f"Shot {shot_number} duration_seconds must be greater than 0 and at most 600")
     return duration
