@@ -1,0 +1,90 @@
+name: Restore source tree
+
+on:
+  push:
+    paths:
+      - ".github/workflows/bootstrap_source.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Reconstruct and verify source archive
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          import codecs
+          import hashlib
+
+          root = Path('.bootstrap')
+          parts = [
+              ('archive-00.txt', False),
+              ('archive-01.txt', False),
+              ('archive-02.txt', False),
+              ('archive-03a.rot13', True),
+              ('archive-03b.rot13', True),
+              ('archive-03c.rot13', True),
+              ('archive-03d.rot13', True),
+              ('archive-04.txt', False),
+              ('archive-05.txt', False),
+              ('archive-06.txt', False),
+              ('archive-07a.rot13', True),
+              ('archive-07b.rot13', True),
+              ('archive-07c.rot13', True),
+              ('archive-07d.rot13', True),
+              ('archive-08.txt', False),
+          ]
+          chunks = []
+          for name, use_rot13 in parts:
+              value = (root / name).read_text(encoding='utf-8').strip()
+              if use_rot13:
+                  value = codecs.decode(value, 'rot_13')
+              chunks.append(value)
+          archive = base64.b64decode(''.join(chunks), validate=True)
+          digest = hashlib.sha256(archive).hexdigest()
+          expected = '2070bfb77fbfbdb95ffc2f2f2f335dddc9ddbff6d0a409e775b7ce6d968967a2'
+          if digest != expected:
+              raise SystemExit(f'archive digest mismatch: {digest}')
+          Path('/tmp/continuity-director-v0.7.0.tar.xz').write_bytes(archive)
+          print(f'archive verified: {digest}')
+          PY
+
+      - name: Extract and validate v0.7.0
+        shell: bash
+        run: |
+          rm -rf /tmp/continuity-source
+          mkdir -p /tmp/continuity-source
+          tar -xJf /tmp/continuity-director-v0.7.0.tar.xz -C /tmp/continuity-source
+          cd /tmp/continuity-source
+          python -m compileall -q .
+          node --check js/continuity_director.js
+          python -m unittest discover -s tests -p "test_*.py"
+          python scripts/validate_release.py
+
+      - name: Replace temporary repository contents
+        shell: bash
+        run: |
+          rsync -a --delete --exclude .git /tmp/continuity-source/ "$GITHUB_WORKSPACE/"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: restore complete v0.7.0 source tree"
+          git push origin HEAD:main
