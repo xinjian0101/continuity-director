@@ -8,6 +8,16 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+HARDENING_MODULES = [
+    "strict_json_core.py",
+    "lock_integrity_core.py",
+    "payload_governance_core.py",
+    "storyboard_hardening_core.py",
+    "production_quality_core.py",
+    "runtime_hardening_core.py",
+    "merge_hardening_core.py",
+    "validation_hardening_core.py",
+]
 REQUIRED = [
     "VERSION",
     "__init__.py",
@@ -19,6 +29,7 @@ REQUIRED = [
     "runtime_core.py",
     "collaboration_core.py",
     "validation_core.py",
+    *HARDENING_MODULES,
     "js/continuity_director.js",
     "js/reliability_panel.js",
     "js/continuity_director.css",
@@ -42,15 +53,22 @@ def read(path: str) -> str:
 
 
 for path in REQUIRED:
-    if not (ROOT / path).is_file():
-        fail(f"missing {path}")
+    candidate = ROOT / path
+    if not candidate.is_file() or candidate.is_symlink():
+        fail(f"missing or unsafe {path}")
 
 version = read("VERSION").strip()
 if not re.fullmatch(r"\d+\.\d+\.\d+", version):
     fail(f"invalid VERSION value: {version!r}")
 
-for path in list(ROOT.glob("*.py")) + list((ROOT / "scripts").glob("*.py")):
+python_files = sorted(list(ROOT.glob("*.py")) + list((ROOT / "scripts").glob("*.py")))
+for path in python_files:
     ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+
+for path in HARDENING_MODULES:
+    source = read(path)
+    if "class " not in source or len(source.splitlines()) < 20:
+        fail(f"hardening module appears incomplete: {path}")
 
 if (ROOT / ".bootstrap").exists() and any((ROOT / ".bootstrap").iterdir()):
     fail("legacy bootstrap artifacts remain")
@@ -75,6 +93,9 @@ for node_name, node_class in module.NODE_CLASS_MAPPINGS.items():
     for attribute in ("FUNCTION", "RETURN_TYPES", "CATEGORY"):
         if not getattr(node_class, attribute, None):
             fail(f"{node_name} is missing {attribute}")
+    function_name = getattr(node_class, "FUNCTION")
+    if not callable(getattr(node_class, function_name, None)):
+        fail(f"{node_name} FUNCTION does not resolve to a callable")
     if not (ROOT / "js" / "docs" / f"{node_name}.md").is_file():
         fail(f"missing fallback docs for {node_name}")
 
@@ -106,7 +127,10 @@ storyboard = json.loads(read("examples/starter_storyboard.json"))
 if not isinstance(storyboard.get("shots"), list) or not storyboard["shots"]:
     fail("starter storyboard has no shots")
 for file_name in ("continuity_director.js", "reliability_panel.js"):
-    if "app.registerExtension" not in read(f"js/{file_name}"):
+    source = read(f"js/{file_name}")
+    if "app.registerExtension" not in source:
         fail(f"{file_name} does not register an extension")
+    if "console.error" not in source:
+        fail(f"{file_name} has no explicit frontend failure reporting")
 
-print(f"release validation passed: v{version}, 20 nodes, version consistency, workflows, docs, and package metadata")
+print(f"release validation passed: v{version}, 20 nodes, {len(HARDENING_MODULES)} hardening modules, workflows, docs, and package metadata")

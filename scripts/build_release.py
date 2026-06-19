@@ -18,7 +18,21 @@ REQUIRED = {
     "nodes.py",
     "extended_nodes.py",
     "environment_nodes.py",
+    "continuity_core.py",
+    "production_core.py",
+    "runtime_core.py",
+    "collaboration_core.py",
+    "validation_core.py",
+    "strict_json_core.py",
+    "lock_integrity_core.py",
+    "payload_governance_core.py",
+    "storyboard_hardening_core.py",
+    "production_quality_core.py",
+    "runtime_hardening_core.py",
+    "merge_hardening_core.py",
+    "validation_hardening_core.py",
     "js/continuity_director.js",
+    "js/reliability_panel.js",
     "pyproject.toml",
     "LICENSE",
 }
@@ -64,6 +78,12 @@ def validate(files: list[Path]) -> None:
         raise SystemExit("legacy bootstrap artifacts must not be packaged")
     if any(name.startswith("dist/") for name in names):
         raise SystemExit("release output directory must not be packaged")
+    if any(".." in Path(name).parts for name in names):
+        raise SystemExit("release package contains unsafe relative paths")
+    for name in REQUIRED:
+        source = ROOT / name
+        if source.is_symlink() or not source.is_file():
+            raise SystemExit(f"required release file is unsafe: {name}")
 
 
 def sha256(path: Path) -> str:
@@ -93,14 +113,14 @@ def build(output: Path) -> dict[str, object]:
         for relative in files:
             archive_name = f"{PACKAGE_DIR}/{relative.as_posix()}"
             archive.writestr(_zip_info(archive_name), (ROOT / relative).read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
-    return {
-        "version": VERSION,
-        "output": str(output),
-        "file_count": len(files),
-        "size_bytes": output.stat().st_size,
-        "sha256": sha256(output),
-        "reproducible": True,
-    }
+    with zipfile.ZipFile(output, "r") as archive:
+        names = archive.namelist()
+        expected = [f"{PACKAGE_DIR}/{path.as_posix()}" for path in files]
+        if names != expected:
+            raise SystemExit("release archive order or contents differ from the validated file list")
+        if any(info.is_dir() or info.filename.startswith("/") or ".." in Path(info.filename).parts for info in archive.infolist()):
+            raise SystemExit("release archive contains unsafe entries")
+    return {"version": VERSION, "output": str(output), "file_count": len(files), "size_bytes": output.stat().st_size, "sha256": sha256(output), "reproducible": True}
 
 
 def main() -> None:
@@ -111,7 +131,7 @@ def main() -> None:
     files = release_files()
     validate(files)
     if args.check:
-        print(json.dumps({"valid": True, "version": VERSION, "file_count": len(files), "reproducible": True}, sort_keys=True))
+        print(json.dumps({"valid": True, "version": VERSION, "file_count": len(files), "reproducible": True, "required_file_count": len(REQUIRED)}, sort_keys=True))
         return
     print(json.dumps(build(args.output), sort_keys=True))
 
