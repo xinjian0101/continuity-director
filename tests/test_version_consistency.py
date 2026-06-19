@@ -16,6 +16,7 @@ class VersionConsistencyTests(unittest.TestCase):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         frontend = (ROOT / "js" / "continuity_director.js").read_text(encoding="utf-8")
+        release_workflow = (ROOT / ".github" / "workflows" / "release.yml").read_text(encoding="utf-8")
         release_notes = ROOT / "docs" / "releases" / f"v{version}.md"
 
         init_match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
@@ -30,6 +31,8 @@ class VersionConsistencyTests(unittest.TestCase):
         self.assertEqual(frontend_match.group(1), version)
         self.assertIn(f"version-{version}-", readme)
         self.assertIn(f"continuity-director-v{version}.zip", readme)
+        self.assertIn("steps.version.outputs.version", release_workflow)
+        self.assertNotIn(f"continuity-director-v{version}.zip\n", release_workflow)
         self.assertTrue(release_notes.is_file())
 
 
