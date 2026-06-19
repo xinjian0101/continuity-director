@@ -36,8 +36,13 @@ def digest(value: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _expected_name(expected: type | tuple[type, ...]) -> str:
+    values = expected if isinstance(expected, tuple) else (expected,)
+    return " or ".join(getattr(item, "__name__", str(item)) for item in values)
+
+
 def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, ...] | None = None) -> Any:
-    if value is None or value == "":
+    if value is None or (isinstance(value, str) and not value.strip()):
         result = copy.deepcopy(default)
     elif isinstance(value, str):
         try:
@@ -47,8 +52,7 @@ def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, 
     else:
         result = copy.deepcopy(value)
     if expected is not None and not isinstance(result, expected):
-        expected_name = getattr(expected, "__name__", str(expected))
-        raise ContinuityError(f"Expected {expected_name}, received {type(result).__name__}")
+        raise ContinuityError(f"Expected {_expected_name(expected)}, received {type(result).__name__}")
     return result
 
 
