@@ -5,7 +5,7 @@ This roadmap describes intended work. Priorities may change when compatibility, 
 ## Current status
 
 - Release line: `0.8.x`
-- Current release: `0.8.22`
+- Current release: `0.8.42`
 - Stability: maintained preview
 - Public nodes: 20
 - CI: Python 3.10, 3.11, and 3.12
@@ -21,13 +21,24 @@ Tracking: Issues #9 and #10.
 
 ## Completed: v0.8.22
 
-- Correct stale frontend version reporting.
-- Replace fixed starter-chain coordinates with size-aware layout.
-- Add frontend overlap regression coverage.
-- Derive release artifact names from the canonical `VERSION` file.
-- Publish a public bug audit and maintenance record.
+- Corrected stale frontend version reporting.
+- Replaced fixed starter-chain coordinates with size-aware layout.
+- Added frontend overlap regression coverage.
+- Derived release artifact names from the canonical `VERSION` file.
+- Published a public bug audit and maintenance record.
 
-Tracking: Issue #17.
+Tracking: Issues #17 and #19.
+
+## Completed: v0.8.42
+
+- Completed exactly 20 sequential hardening iterations.
+- Strengthened JSON, collection, lock, storyboard, quality, ranking, dependency, migration, retry, checkpoint, hash, and environment validation.
+- Added deletion-aware merge diagnostics and deterministic execution-plan behavior.
+- Made release ZIP output reproducible and symlink-safe.
+- Added stronger release validation and comprehensive regression coverage.
+- Added failure-safe frontend storage, node creation, and starter-chain rollback.
+
+Tracking: Issues #20 and #22, PR #21.
 
 ## v0.9.0
 
