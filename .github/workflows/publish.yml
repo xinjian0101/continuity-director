@@ -1,0 +1,68 @@
+name: Publish GitHub release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - VERSION
+      - .github/workflows/publish.yml
+  workflow_dispatch:
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(tr -d '\r\n' < VERSION)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=dist/continuity-director-v$VERSION.zip" >> "$GITHUB_OUTPUT"
+          echo "checksum=dist/continuity-director-v$VERSION.zip.sha256" >> "$GITHUB_OUTPUT"
+          echo "notes=docs/releases/v$VERSION.md" >> "$GITHUB_OUTPUT"
+      - name: Validate repository
+        run: |
+          python -m compileall -q .
+          python scripts/maintainer_health.py
+          python scripts/smoke_import.py
+          PYTHONPATH=tests python -m unittest discover -s tests -p "test_*.py"
+          python scripts/validate_release.py
+          for file in js/*.js; do node --check "$file"; done
+          node tests/frontend_smoke.mjs
+          node tests/reliability_frontend_smoke.mjs
+      - name: Build and checksum
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          python scripts/build_release.py
+          cd dist
+          sha256sum "continuity-director-v${VERSION}.zip" > "continuity-director-v${VERSION}.zip.sha256"
+      - name: Verify release notes
+        env:
+          NOTES: ${{ steps.version.outputs.notes }}
+        run: test -s "$NOTES"
+      - name: Publish prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Continuity Director v${{ steps.version.outputs.version }}
+          body_path: ${{ steps.version.outputs.notes }}
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            ${{ steps.version.outputs.zip }}
+            ${{ steps.version.outputs.checksum }}
