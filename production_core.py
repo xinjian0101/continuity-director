@@ -60,9 +60,7 @@ def _id_list(value: Any, field: str, shot_number: int) -> list[str]:
     seen: set[str] = set()
     for raw in values:
         item = normalize_id(raw, "")
-        if not item:
-            continue
-        if item not in seen:
+        if item and item not in seen:
             seen.add(item)
             output.append(item)
     return output
@@ -148,15 +146,30 @@ def reference_handoff(previous: Any, current: Any, strategy: str = "last_to_firs
 
 def quality_gate(metrics: Any, thresholds: Any | None = None, mode: str = "all") -> dict[str, Any]:
     metric_data = parse_json(metrics, default={}, expected=dict)
+    supplied_thresholds = parse_json(thresholds, default={}, expected=dict)
+    normalized_mode = str(mode or "").strip().lower()
+    if normalized_mode not in {"all", "any"}:
+        raise ContinuityError("Quality gate mode must be 'all' or 'any'")
     threshold_data = dict(DEFAULT_THRESHOLDS)
-    threshold_data.update(parse_json(thresholds, default={}, expected=dict))
+    for raw_name, value in supplied_thresholds.items():
+        name = str(raw_name).strip()
+        if not name:
+            raise ContinuityError("Quality gate metric names must not be empty")
+        threshold_data[name] = value
     checks = []
-    for name, minimum in threshold_data.items():
+    for name in sorted(threshold_data):
+        minimum = _clamp(threshold_data[name])
         score = _clamp(metric_data.get(name, 0.0))
-        minimum = _clamp(minimum)
-        checks.append({"metric": name, "score": score, "minimum": minimum, "passed": score >= minimum})
-    passed = True if not checks else (any(item["passed"] for item in checks) if mode == "any" else all(item["passed"] for item in checks))
-    return {"schema": "continuity-director/quality-gate@1.0", "mode": mode, "passed": passed, "checks": checks, "failed_metrics": [item["metric"] for item in checks if not item["passed"]]}
+        checks.append({"metric": name, "score": score, "minimum": minimum, "passed": score >= minimum, "missing": name not in metric_data})
+    passed = True if not checks else (any(item["passed"] for item in checks) if normalized_mode == "any" else all(item["passed"] for item in checks))
+    return {
+        "schema": "continuity-director/quality-gate@1.0",
+        "mode": normalized_mode,
+        "passed": passed,
+        "checks": checks,
+        "failed_metrics": [item["metric"] for item in checks if not item["passed"]],
+        "missing_metrics": [item["metric"] for item in checks if item["missing"]],
+    }
 
 
 def score_take(metrics: dict[str, Any], weights: dict[str, Any] | None = None) -> float:
