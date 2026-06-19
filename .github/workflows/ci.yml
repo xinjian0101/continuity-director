@@ -24,7 +24,11 @@ jobs:
         run: PYTHONPATH=tests python -m unittest discover -s tests -p "test_*.py"
       - name: Release validation
         run: python scripts/validate_release.py
+      - name: Installable package validation
+        run: python scripts/build_release.py --check
       - name: Frontend syntax
-        run: node --check js/continuity_director.js
-      - name: Frontend sidebar smoke
+        run: for file in js/*.js; do node --check "$file"; done
+      - name: Main dashboard smoke
         run: node tests/frontend_smoke.mjs
+      - name: Reliability dashboard smoke
+        run: node tests/reliability_frontend_smoke.mjs
