@@ -2,12 +2,31 @@
 
 ## Unreleased
 
+## [0.8.22] - 2026-06-19
+
+### Fixed
+
+- Replaced fixed starter-chain coordinates with a size-aware column layout so generated nodes no longer overlap.
+- Synchronized the frontend sidebar and about badge with the canonical project version.
+- Removed hard-coded release artifact names from the tag-triggered package workflow.
+- Enforced a minimum node height when Continuity Director styling is applied.
+
+### Added
+
+- Frontend regression coverage that uses realistic node dimensions and rejects any overlapping starter-chain nodes.
+- Frontend version matching in the public version-consistency test.
+- Public bug audit and Issue #17 as maintenance evidence for the patch release.
+
+## [0.8.21] - 2026-06-19
+
 ### Added
 
 - Primary maintainer declaration, CODEOWNERS, governance policy, public roadmap, ecosystem-value documentation, adoption policy, release process, and code of conduct.
 - Structured opt-in adoption report form.
 - Automated maintainer-health validation with unit-test coverage.
 - Weekly maintainer-health workflow and GitHub Actions Dependabot configuration.
+- Canonical `VERSION` source, automatic prerelease publication, release notes, ZIP creation, and SHA-256 generation.
+- One-command GitHub administrator setup utility.
 
 ### Changed
 
