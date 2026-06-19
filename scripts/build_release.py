@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIR = "ComfyUI-ContinuityDirector"
-EXCLUDED_PARTS = {".git", ".github", "tests", "__pycache__", ".pytest_cache"}
+EXCLUDED_PARTS = {".git", ".github", "tests", "dist", "__pycache__", ".pytest_cache"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
 REQUIRED = {"__init__.py", "nodes.py", "extended_nodes.py", "environment_nodes.py", "js/continuity_director.js", "pyproject.toml", "LICENSE"}
 
@@ -33,12 +33,16 @@ def validate(files: list[Path]) -> None:
         raise SystemExit(f"release package missing: {', '.join(missing)}")
     if any(name.startswith(".bootstrap/") for name in names):
         raise SystemExit("legacy bootstrap artifacts must not be packaged")
+    if any(name.startswith("dist/") for name in names):
+        raise SystemExit("release output directory must not be packaged")
 
 
 def build(output: Path) -> dict[str, object]:
     files = release_files()
     validate(files)
     output.parent.mkdir(parents=True, exist_ok=True)
+    if output.exists():
+        output.unlink()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for relative in files:
             archive.write(ROOT / relative, f"{PACKAGE_DIR}/{relative.as_posix()}")
