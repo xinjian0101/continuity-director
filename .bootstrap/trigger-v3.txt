@@ -1,0 +1,1 @@
+Trigger the verified source restoration workflow v2 after workflow registration.
