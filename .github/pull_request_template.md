@@ -1,27 +1,36 @@
 ## Summary
 
-Describe the problem and the implemented change.
+Describe the change and the production problem it solves.
 
-## Scope
+## Change type
 
-- Area:
-- User-visible impact:
-- Workflow or schema impact:
+- [ ] Bug fix
+- [ ] New node or production capability
+- [ ] Dashboard or localization change
+- [ ] Reliability or packaging change
+- [ ] Documentation only
+- [ ] Breaking change with migration support
 
 ## Validation
 
 - [ ] `python -m compileall -q .`
-- [ ] `python -m unittest discover -s tests -p "test_*.py"`
+- [ ] `python scripts/smoke_import.py`
+- [ ] `PYTHONPATH=tests python -m unittest discover -s tests -p "test_*.py"`
 - [ ] `python scripts/validate_release.py`
-- [ ] Existing workflows remain compatible.
-- [ ] New interface text supports English, 中文, and bilingual mode.
-- [ ] Documentation and changelog are updated when required.
-- [ ] No credentials, personal data, or private production assets are included.
+- [ ] `python scripts/build_release.py --check`
+- [ ] Frontend smoke tests run when JavaScript changed
 
-## Screenshots or logs
+## Compatibility
 
-Add sanitized evidence when the change affects the interface or runtime behavior.
+- [ ] Public node identifiers remain stable, or a migration path is included.
+- [ ] Stored workflow keys and schemas remain compatible, or changes are documented.
+- [ ] New user-facing text supports English, Simplified Chinese, and bilingual mode.
+- [ ] No credentials, private production assets, telemetry, or executable imported configuration are included.
 
-## Risks and rollback
+## Screenshots or workflow example
 
-Describe possible regressions and the rollback path.
+Add screenshots for interface changes or a minimized workflow/JSON example for behavioral changes.
+
+## Documentation
+
+List updated README, help pages, examples, architecture notes, or changelog entries.

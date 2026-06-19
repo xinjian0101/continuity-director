@@ -1,54 +1,68 @@
 name: Bug report
-description: Report a reproducible problem in Continuity Director
+description: Report a reproducible plugin, node, interface, or packaging problem
 title: "[Bug]: "
-labels:
-  - bug
+labels: ["bug", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Remove secrets, personal data, and private production assets before submitting.
-  - type: input
-    id: version
-    attributes:
-      label: Continuity Director version
-      placeholder: 0.7.0 or commit SHA
-    validations:
-      required: true
-  - type: input
-    id: comfyui
-    attributes:
-      label: ComfyUI version
-      placeholder: Commit SHA or release
-    validations:
-      required: true
-  - type: dropdown
-    id: interface_language
-    attributes:
-      label: Interface language
-      options:
-        - English
-        - 中文
-        - Bilingual
-        - Not applicable
-    validations:
-      required: true
+        Thank you for reporting a problem. Remove private data, credentials, and proprietary assets before submitting.
   - type: textarea
     id: summary
     attributes:
       label: Problem summary
-      description: Describe what failed and where it occurred.
+      description: Describe the failure and where it occurs.
+      placeholder: The Continuity Director sidebar fails to load after...
+    validations:
+      required: true
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Continuity Director version
+      description: Version number or commit SHA.
+      placeholder: 0.8.20 or 99bd045
+    validations:
+      required: true
+  - type: input
+    id: comfyui-version
+    attributes:
+      label: ComfyUI version
+      placeholder: Commit SHA or release version
+    validations:
+      required: true
+  - type: input
+    id: frontend-version
+    attributes:
+      label: ComfyUI frontend version
+      placeholder: Version shown by ComfyUI or package manager
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: 3.10, 3.11, or 3.12
     validations:
       required: true
   - type: textarea
-    id: reproduce
+    id: reproduction
     attributes:
       label: Reproduction steps
+      description: Provide the smallest sequence that reproduces the issue.
       placeholder: |
-        1. Open...
-        2. Configure...
-        3. Run...
-        4. Observe...
+        1. Start ComfyUI
+        2. Open the Continuity Director sidebar
+        3. Add ...
+        4. Observe ...
     validations:
       required: true
   - type: textarea
@@ -67,14 +81,21 @@ body:
     id: logs
     attributes:
       label: Relevant logs
-      description: Paste sanitized logs or a minimal error trace.
+      description: Paste the complete traceback or browser-console error. Remove secrets and personal paths when necessary.
       render: shell
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Minimal workflow or JSON
+      description: Paste a minimized example or attach a sanitized file.
   - type: checkboxes
     id: checks
     attributes:
       label: Submission checks
       options:
-        - label: I searched existing issues.
+        - label: I searched existing issues and pull requests.
           required: true
-        - label: I removed credentials, personal data, and private assets.
+        - label: I removed passwords, tokens, API keys, personal data, and private assets.
+          required: true
+        - label: I can reproduce this issue on the version listed above.
           required: true
