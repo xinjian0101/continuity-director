@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_DIR = "ComfyUI-ContinuityDirector"
 EXCLUDED_PARTS = {".git", ".github", "tests", "dist", "__pycache__", ".pytest_cache"}
 EXCLUDED_SUFFIXES = {".pyc", ".pyo"}
+EXCLUDED_NAMES = {".DS_Store", "Thumbs.db", "desktop.ini"}
+FIXED_ZIP_TIME = (2020, 1, 1, 0, 0, 0)
 REQUIRED = {
     "VERSION",
     "__init__.py",
@@ -40,22 +42,24 @@ def default_output() -> Path:
 def release_files() -> list[Path]:
     files: list[Path] = []
     for path in ROOT.rglob("*"):
-        if not path.is_file():
+        if path.is_symlink() or not path.is_file():
             continue
         relative = path.relative_to(ROOT)
         if any(part in EXCLUDED_PARTS for part in relative.parts):
             continue
-        if path.suffix in EXCLUDED_SUFFIXES:
+        if path.name in EXCLUDED_NAMES or path.suffix in EXCLUDED_SUFFIXES:
             continue
         files.append(relative)
-    return sorted(files)
+    return sorted(files, key=lambda item: item.as_posix())
 
 
 def validate(files: list[Path]) -> None:
-    names = {path.as_posix() for path in files}
-    missing = sorted(REQUIRED - names)
+    names = [path.as_posix() for path in files]
+    missing = sorted(REQUIRED - set(names))
     if missing:
         raise SystemExit(f"release package missing: {', '.join(missing)}")
+    if len(names) != len(set(names)):
+        raise SystemExit("release package contains duplicate paths")
     if any(name.startswith(".bootstrap/") for name in names):
         raise SystemExit("legacy bootstrap artifacts must not be packaged")
     if any(name.startswith("dist/") for name in names):
@@ -63,11 +67,20 @@ def validate(files: list[Path]) -> None:
 
 
 def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
+    result = hashlib.sha256()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+            result.update(chunk)
+    return result.hexdigest()
+
+
+def _zip_info(name: str) -> zipfile.ZipInfo:
+    info = zipfile.ZipInfo(name, FIXED_ZIP_TIME)
+    info.compress_type = zipfile.ZIP_DEFLATED
+    info.create_system = 3
+    info.external_attr = 0o100644 << 16
+    info.flag_bits |= 0x800
+    return info
 
 
 def build(output: Path) -> dict[str, object]:
@@ -78,13 +91,15 @@ def build(output: Path) -> dict[str, object]:
         output.unlink()
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for relative in files:
-            archive.write(ROOT / relative, f"{PACKAGE_DIR}/{relative.as_posix()}")
+            archive_name = f"{PACKAGE_DIR}/{relative.as_posix()}"
+            archive.writestr(_zip_info(archive_name), (ROOT / relative).read_bytes(), compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)
     return {
         "version": VERSION,
         "output": str(output),
         "file_count": len(files),
         "size_bytes": output.stat().st_size,
         "sha256": sha256(output),
+        "reproducible": True,
     }
 
 
@@ -96,7 +111,7 @@ def main() -> None:
     files = release_files()
     validate(files)
     if args.check:
-        print(json.dumps({"valid": True, "version": VERSION, "file_count": len(files)}, sort_keys=True))
+        print(json.dumps({"valid": True, "version": VERSION, "file_count": len(files), "reproducible": True}, sort_keys=True))
         return
     print(json.dumps(build(args.output), sort_keys=True))
 
