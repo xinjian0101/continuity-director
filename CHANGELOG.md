@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Redesigned the GitHub repository homepage with live CI status, structured navigation, workflow diagrams, complete node maps, installation guidance, and contribution links.
+- Updated the repository banner to reflect 20 nodes, seven production stages, bilingual support, and verified builds.
+- Added a documentation hub and dedicated support page.
+- Added structured bug-report and feature-request forms plus a pull-request template.
+
 ## [0.8.20] - 2026-06-19
 
 ### Added

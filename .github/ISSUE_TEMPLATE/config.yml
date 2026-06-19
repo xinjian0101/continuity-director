@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation hub
+    url: https://github.com/xinjian0101/continuity-director/blob/main/docs/README.md
+    about: Read installation, architecture, interface, and validation documentation.
+  - name: Support and troubleshooting
+    url: https://github.com/xinjian0101/continuity-director/blob/main/SUPPORT.md
+    about: Check common installation, sidebar, node-loading, and packaging problems.
+  - name: Security policy
+    url: https://github.com/xinjian0101/continuity-director/blob/main/SECURITY.md
+    about: Review the private-reporting guidance before disclosing a vulnerability.
