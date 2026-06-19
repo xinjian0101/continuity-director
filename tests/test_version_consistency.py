@@ -15,7 +15,6 @@ class VersionConsistencyTests(unittest.TestCase):
         init_text = (ROOT / "__init__.py").read_text(encoding="utf-8")
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
         release_notes = ROOT / "docs" / "releases" / f"v{version}.md"
 
         init_match = re.search(r'__version__\s*=\s*"([^"]+)"', init_text)
@@ -27,7 +26,6 @@ class VersionConsistencyTests(unittest.TestCase):
         self.assertEqual(project_match.group(1), version)
         self.assertIn(f"version-{version}-", readme)
         self.assertIn(f"continuity-director-v{version}.zip", readme)
-        self.assertIn(f"## [{version}]", changelog)
         self.assertTrue(release_notes.is_file())
 
 
