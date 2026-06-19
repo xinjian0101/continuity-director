@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/xinjian0101/continuity-director/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/xinjian0101/continuity-director/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/xinjian0101/continuity-director/releases"><img alt="Version" src="https://img.shields.io/badge/version-0.8.22-2563eb"></a>
+  <a href="https://github.com/xinjian0101/continuity-director/releases"><img alt="Version" src="https://img.shields.io/badge/version-0.8.42-2563eb"></a>
   <img alt="Nodes" src="https://img.shields.io/badge/nodes-20-0f766e">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10--3.12-3776ab">
   <a href="https://github.com/xinjian0101/continuity-director/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/xinjian0101/continuity-director"></a>
@@ -29,30 +29,29 @@ Continuity Director is a public, installable ComfyUI custom-node package for rep
 | Repository visibility | Public |
 | Primary maintainer | [@xinjian0101](https://github.com/xinjian0101) |
 | Maintenance model | Active maintainer-led open source |
-| Current release | [`v0.8.22`](https://github.com/xinjian0101/continuity-director/releases) maintained preview |
-| Latest maintenance | Size-aware starter-chain layout, frontend version consistency, and dynamic release artifact naming |
+| Current release | [`v0.8.42`](https://github.com/xinjian0101/continuity-director/releases) maintained preview |
+| Latest maintenance | 20 sequential hardening iterations covering validation, scheduling, retries, checkpoints, hashing, packaging, and frontend rollback |
+| Maintenance evidence | [v0.8.42 iteration log](docs/ITERATION_LOG_v0.8.42.md) |
 | Governance | [GOVERNANCE.md](GOVERNANCE.md) |
 | Maintainers | [MAINTAINERS.md](MAINTAINERS.md) |
 | Roadmap | [ROADMAP.md](ROADMAP.md) |
 | Release process | [docs/RELEASING.md](docs/RELEASING.md) |
-| Administrator setup | [docs/ADMIN_SETUP.md](docs/ADMIN_SETUP.md) |
 | Security | [SECURITY.md](SECURITY.md) |
 | Adoption evidence | [docs/ADOPTION.md](docs/ADOPTION.md) |
 
 Public Issues, pull requests, CI, changelog entries, automatic release publication, scheduled health checks, and Dependabot updates provide verifiable maintenance evidence.
 
-## Ecosystem value
+## What v0.8.42 hardens
 
-The project provides model-agnostic infrastructure around AI video generation:
-
-- Character, wardrobe, scene, camera, and shot continuity locks.
-- Deterministic storyboard-to-Take expansion.
-- Quality gates, ranking, and exact-path continuity reports.
-- Dependency-safe execution planning, bounded retries, and checkpoints.
-- Revision-safe collaboration, audit events, and portable verified packages.
-- English, Simplified Chinese, and bilingual interface modes.
-
-See [docs/ECOSYSTEM.md](docs/ECOSYSTEM.md) for beneficiaries, integrations, boundaries, and non-goals.
+- Whitespace and malformed JSON input handling.
+- Collection normalization, deduplication, and path-ignore behavior.
+- Manifest, storyboard, seed, duration, Take, and dependency validation.
+- Finite-safe quality scoring and retry schedules.
+- Deterministic execution plans and order-preserving checkpoints.
+- Deletion-aware three-way merge diagnostics.
+- Stable no-op migrations and explicit hash verification reasons.
+- Canonical environment locks and reproducible, symlink-safe ZIP output.
+- Stronger release validation and rollback-safe frontend node creation.
 
 ## Production workflow
 
@@ -69,7 +68,7 @@ flowchart LR
     V[Retry / Checkpoint / Environment Lock] --> E
 ```
 
-The dashboard action **Add starter chain** inserts and connects the primary production path using a size-aware layout that avoids node overlap.
+The dashboard action **Add starter chain** inserts and connects the primary production path using a size-aware layout and rolls back partial creation failures.
 
 ## Node map
 
@@ -103,7 +102,7 @@ Restart ComfyUI, then search for nodes beginning with `CD ·` or open the **Cont
 
 ### Release ZIP
 
-Download `continuity-director-v0.8.22.zip` and its checksum from [GitHub Releases](https://github.com/xinjian0101/continuity-director/releases). Extract the included `ComfyUI-ContinuityDirector` folder into `ComfyUI/custom_nodes`, then restart ComfyUI.
+Download `continuity-director-v0.8.42.zip` and its checksum from [GitHub Releases](https://github.com/xinjian0101/continuity-director/releases). Extract the included `ComfyUI-ContinuityDirector` folder into `ComfyUI/custom_nodes`, then restart ComfyUI.
 
 ### Update
 
@@ -118,7 +117,7 @@ git pull
 python scripts/build_release.py
 ```
 
-Output: `dist/continuity-director-v0.8.22.zip`.
+Output: `dist/continuity-director-v0.8.42.zip`.
 
 ## First production run
 
@@ -148,6 +147,7 @@ node tests/reliability_frontend_smoke.mjs
 ## Documentation
 
 - [Documentation hub](docs/README.md)
+- [20-iteration maintenance log](docs/ITERATION_LOG_v0.8.42.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Interface and localization](docs/INTERFACE.md)
 - [Ecosystem value](docs/ECOSYSTEM.md)
