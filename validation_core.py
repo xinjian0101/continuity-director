@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import hmac
 import math
 import platform
 import re
@@ -12,6 +13,7 @@ from typing import Any
 from .continuity_core import ContinuityError, digest, normalize_id, parse_json, stable_json, utc_now
 
 _VERSION_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _bounded_int(value: Any, field: str, minimum: int, maximum: int) -> int:
@@ -34,12 +36,24 @@ def _finite_float(value: Any, field: str) -> float:
 
 def verify_hashed_payload(payload: Any) -> dict[str, Any]:
     data = parse_json(payload, default={}, expected=dict)
-    supplied = str(data.get("hash", ""))
+    supplied = str(data.get("hash", "")).strip().lower()
     canonical = copy.deepcopy(data)
     canonical.pop("hash", None)
     expected = digest(canonical)
+    valid_format = bool(_HASH_RE.fullmatch(supplied))
+    valid = valid_format and hmac.compare_digest(supplied, expected)
+    if not supplied:
+        reason = "missing-hash"
+    elif not valid_format:
+        reason = "invalid-hash-format"
+    elif not valid:
+        reason = "hash-mismatch"
+    else:
+        reason = "valid"
     return {
-        "valid": bool(supplied) and supplied == expected,
+        "valid": valid,
+        "reason": reason,
+        "hash_format_valid": valid_format,
         "supplied_hash": supplied,
         "expected_hash": expected,
         "schema": data.get("schema"),
