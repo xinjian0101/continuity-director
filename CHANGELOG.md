@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+## [0.8.42] - 2026-06-19
+
+### Fixed
+
+- Hardened whitespace JSON parsing and expected-type diagnostics.
+- Normalized and deduplicated collection inputs while preserving order.
+- Corrected ignored continuity paths for list descendants.
+- Added manifest lock kind, structure, and duplicate-ID validation.
+- Hardened storyboard IDs, collections, references, seeds, durations, and duplicate handling.
+- Rejected non-finite production metrics, thresholds, weights, and delays.
+- Validated quality-gate modes and made metric checks deterministic.
+- Normalized Take IDs and rejected duplicate ranking identities.
+- Normalized task dependencies, rejected self-dependencies, and bounded scheduler parallelism.
+- Preserved deletion semantics in three-way merge conflict reports.
+- Made same-version migrations true no-ops and validated target versions.
+- Prevented retry exponent overflow and malformed checkpoint state.
+- Added explicit hash-format and mismatch diagnostics with constant-time comparison.
+- Canonicalized environment model inventories and missing version fields.
+- Made release ZIP archives reproducible and excluded symlinks and OS junk files.
+- Added rollback-safe frontend node creation and protected browser-storage access.
+
+### Added
+
+- Exactly 20 sequential hardening commits tracked in Issue #20 and PR #21.
+- Comprehensive regression tests for input, manifest, storyboard, ranking, runtime, merge, migration, retry, checkpoint, hash, and environment boundaries.
+- Stronger release validation across node metadata, documentation, versions, workflows, and package files.
+- Public v0.8.42 iteration log and release notes.
+
 ## [0.8.22] - 2026-06-19
 
 ### Fixed

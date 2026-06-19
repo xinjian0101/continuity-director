@@ -51,6 +51,7 @@ const graph = {
   _nodes: graphNodes,
   links: {},
   add(node) { node.id = nextId++; graphNodes.push(node); },
+  remove(node) { const index = graphNodes.indexOf(node); if (index >= 0) graphNodes.splice(index, 1); },
 };
 const makeNode = (type) => ({
   type,
@@ -103,7 +104,7 @@ const overlaps = (a, b) => {
 vm.runInThisContext(source, { filename: "continuity_director.js" });
 if (!extension) throw new Error("frontend extension was not registered");
 if (extension.name !== "continuity-director.dashboard") throw new Error("unexpected extension name");
-if (extension.aboutPageBadges?.[0]?.label !== "Continuity Director v0.8.22") throw new Error("frontend version badge is stale");
+if (extension.aboutPageBadges?.[0]?.label !== "Continuity Director v0.8.42") throw new Error("frontend version badge is stale");
 await extension.setup();
 if (!sidebar.config || sidebar.config.type !== "custom") throw new Error("sidebar tab was not registered");
 const host = new FakeElement("aside");
@@ -111,7 +112,7 @@ sidebar.config.render(host);
 if (host.children.length === 0) throw new Error("sidebar render produced no content");
 const starter = extension.commands.find((item) => item.id === "continuity-director.add-starter");
 if (!starter) throw new Error("starter command missing");
-starter.function();
+if (starter.function() !== true) throw new Error("starter chain did not report success");
 if (graphNodes.length !== 8) throw new Error(`starter chain created ${graphNodes.length} nodes instead of 8`);
 for (let left = 0; left < graphNodes.length; left += 1) {
   if (!Array.isArray(graphNodes[left].pos) || graphNodes[left].pos.length !== 2) throw new Error(`${graphNodes[left].type} has no position`);
