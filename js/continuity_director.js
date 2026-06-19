@@ -1,7 +1,7 @@
 import { app } from "../../scripts/app.js";
 
 const NAME = "continuity-director.dashboard";
-const VER = "0.8.22";
+const VER = "0.8.42";
 const KEY = "continuity-director.language";
 const STARTER_GAP_X = 120;
 const STARTER_GAP_Y = 80;
