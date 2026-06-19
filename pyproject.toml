@@ -1,7 +1,7 @@
 [project]
 name = "continuity-director"
-version = "0.8.0"
-description = "Continuity locks, deterministic shot planning, quality gates, collaboration, and a bilingual production dashboard for ComfyUI."
+version = "0.8.20"
+description = "Twenty continuity, directing, quality, runtime, collaboration, export, and reliability nodes with a bilingual ComfyUI dashboard."
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = []
