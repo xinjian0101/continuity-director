@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/runner/work/continuity-director/continuity-director/.bootstrap/restore_source.py", line 83, in <module>
+    restore()
+    ~~~~~~~^^
+  File "/home/runner/work/continuity-director/continuity-director/.bootstrap/restore_source.py", line 46, in restore
+    archive = base64.b64decode("".join(chunks), validate=True)
+  File "/opt/hostedtoolcache/Python/3.13.14/x64/lib/python3.13/base64.py", line 88, in b64decode
+    return binascii.a2b_base64(s, strict_mode=validate)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+binascii.Error: Incorrect padding
