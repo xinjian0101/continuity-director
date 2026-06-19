@@ -172,12 +172,26 @@ def quality_gate(metrics: Any, thresholds: Any | None = None, mode: str = "all")
     }
 
 
-def score_take(metrics: dict[str, Any], weights: dict[str, Any] | None = None) -> float:
-    applied = dict(DEFAULT_WEIGHTS)
+def _normalized_weights(weights: dict[str, Any] | None) -> dict[str, float]:
+    applied: dict[str, Any] = dict(DEFAULT_WEIGHTS)
     if weights:
         applied.update(weights)
-    positive = {key: max(0.0, float(value)) for key, value in applied.items()}
-    total_weight = sum(positive.values()) or 1.0
+    output: dict[str, float] = {}
+    for raw_name, raw_weight in applied.items():
+        name = str(raw_name).strip()
+        if not name:
+            raise ContinuityError("Take weight names must not be empty")
+        output[name] = max(0.0, _finite_number(raw_weight, f"Weight {name}"))
+    return output
+
+
+def score_take(metrics: dict[str, Any], weights: dict[str, Any] | None = None) -> float:
+    if not isinstance(metrics, dict):
+        raise ContinuityError("Take metrics must be an object")
+    positive = _normalized_weights(weights)
+    total_weight = sum(positive.values())
+    if total_weight <= 0.0:
+        return 0.0
     return sum(_clamp(metrics.get(key, 0.0)) * weight for key, weight in positive.items()) / total_weight
 
 
@@ -185,12 +199,20 @@ def rank_takes(takes: Any, weights: Any | None = None) -> list[dict[str, Any]]:
     take_list = parse_json(takes, default=[], expected=list)
     weight_data = parse_json(weights, default={}, expected=dict)
     ranked: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
     for index, take in enumerate(take_list):
         if not isinstance(take, dict):
             raise ContinuityError(f"Take {index + 1} must be an object")
         item = copy.deepcopy(take)
-        item["take_id"] = str(item.get("take_id") or item.get("id") or f"take-{index + 1:03d}")
-        item["score"] = round(score_take(item.get("metrics", item), weight_data), 6)
+        take_id = normalize_id(item.get("take_id") or item.get("id") or f"take-{index + 1:03d}", f"take-{index + 1:03d}")
+        if take_id in seen_ids:
+            raise ContinuityError(f"Duplicate take id: {take_id}")
+        seen_ids.add(take_id)
+        metrics = item.get("metrics", item)
+        if not isinstance(metrics, dict):
+            raise ContinuityError(f"Take {take_id} metrics must be an object")
+        item["take_id"] = take_id
+        item["score"] = round(score_take(metrics, weight_data), 6)
         ranked.append(item)
     ranked.sort(key=lambda item: (-item["score"], item["take_id"]))
     for rank, item in enumerate(ranked, start=1):
