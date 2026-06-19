@@ -26,6 +26,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Compile
         run: python -m compileall -q .
+      - name: Maintainer health
+        run: python scripts/maintainer_health.py
       - name: ComfyUI lifecycle smoke
         run: python scripts/smoke_import.py
       - name: Unit tests
