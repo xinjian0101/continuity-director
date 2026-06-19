@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import copy
 import platform
+import re
 import sys
 from typing import Any
 
 from .continuity_core import ContinuityError, digest, normalize_id, parse_json, stable_json, utc_now
+
+_VERSION_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
 
 
 def verify_hashed_payload(payload: Any) -> dict[str, Any]:
@@ -26,17 +29,22 @@ def verify_hashed_payload(payload: Any) -> dict[str, Any]:
 
 def migrate_payload(payload: Any, target_version: str = "1.0") -> tuple[dict[str, Any], list[dict[str, str]]]:
     data = parse_json(payload, default={}, expected=dict)
-    result = copy.deepcopy(data)
-    changes: list[dict[str, str]] = []
-    schema = str(result.get("schema", "continuity-director/payload@0.0"))
+    target = str(target_version or "").strip()
+    if not _VERSION_RE.fullmatch(target):
+        raise ContinuityError("target_version must use numeric dot notation such as 1.0 or 1.0.1")
+    schema = str(data.get("schema") or "continuity-director/payload@0.0").strip()
     if "@" in schema:
         prefix, current = schema.rsplit("@", 1)
     else:
         prefix, current = schema, "0.0"
-    if current != target_version:
-        result["schema"] = f"{prefix}@{target_version}"
-        changes.append({"path": "$.schema", "from": current, "to": target_version})
-    result["migration"] = {"target_version": target_version, "changed": bool(changes)}
+    prefix = prefix.strip() or "continuity-director/payload"
+    current = current.strip() or "0.0"
+    if current == target:
+        return copy.deepcopy(data), []
+    result = copy.deepcopy(data)
+    result["schema"] = f"{prefix}@{target}"
+    changes = [{"path": "$.schema", "from": current, "to": target}]
+    result["migration"] = {"target_version": target, "changed": True}
     result.pop("hash", None)
     result["hash"] = digest(result)
     return result, changes
