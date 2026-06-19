@@ -1,90 +1,119 @@
 # Continuity Director
 
-面向 AI 短视频生产的 ComfyUI 一致性、编排、质检与多人协作插件。
+<p align="center">
+  <strong>Production-grade continuity control, orchestration, quality review, and collaboration for ComfyUI video workflows.</strong>
+</p>
 
-插件不替代视频模型。它把角色、服装、道具、场景、镜头、种子、参考帧、任务队列、审批记录和生成环境固化为可复现数据，降低人物漂移、跨镜变化和多人协作冲突。
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.8.0--preview-2563eb">
+  <img alt="ComfyUI" src="https://img.shields.io/badge/ComfyUI-custom%20nodes-7c3aed">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-3776ab">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-16a34a">
+  <img alt="Interface" src="https://img.shields.io/badge/interface-English%20%7C%20中文%20%7C%20Bilingual-f97316">
+</p>
 
-## v0.7.0 能力概览
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#core-capabilities">Capabilities</a> ·
+  <a href="#workflow">Workflow</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#interface-languages">Languages</a> ·
+  <a href="#documentation">Documentation</a>
+</p>
 
-| 模块 | 作用 |
+---
+
+## Overview
+
+Continuity Director is a ComfyUI extension for repeatable AI video production. It does not replace a video model. Instead, it turns characters, costumes, props, locations, shots, seeds, reference frames, task queues, approvals, and runtime environments into structured production data.
+
+The goal is to reduce character drift, cross-shot inconsistency, failed handoffs, and collaboration conflicts while keeping every production decision traceable and reproducible.
+
+> **Important:** No workflow manager can guarantee pixel-perfect continuity. Final output still depends on the selected model, reference quality, model version, sampler, motion range, and platform-level randomness.
+
+## Core capabilities
+
+| Area | What it provides |
 |---|---|
-| 连续性锁 | 固定项目、角色、演员表、场景、镜头、状态和种子 |
-| 批量导演 | 从分镜 JSON 批量生成连续镜头链和 Take |
-| 运行编排 | 依赖 DAG、并行波次、持久队列、任务租约和失败恢复 |
-| 参考帧 | 参考帧生命周期、自动择优和首尾帧承接 |
-| 质量闭环 | 技术质检、外部身份指标、边界连续性、选优和定向重做 |
-| 后期治理 | 视频探测、抽帧、拼接、快照、差异、回滚和血缘追踪 |
-| 多人协作 | 角色权限、编辑锁、审批流、变更请求和生成放行门 |
-| 分布式执行 | 工作节点注册、心跳、能力匹配和容量调度 |
-| 供应链安全 | 环境锁文件、模板包校验、发布者信任和无密钥配置包 |
-| 可复现验证 | 审计哈希链、故障注入、回归基线和运行重放比较 |
+| Continuity locks | Stable project, character, cast, costume, prop, location, shot, state, and seed definitions |
+| Batch directing | Storyboard JSON ingestion, continuous shot chains, and controlled take variants |
+| Runtime orchestration | Dependency DAGs, parallel execution waves, persistent queues, leases, retries, and recovery |
+| Reference management | Reference-frame lifecycle, automatic selection, and first/last-frame handoff |
+| Quality loop | Technical checks, declarative identity metrics, boundary continuity, take ranking, and targeted regeneration |
+| Post-production governance | Video probing, frame extraction, assembly, snapshots, diffs, rollback, and lineage tracking |
+| Team collaboration | Role-based access, edit locks, review workflows, change requests, and generation gates |
+| Distributed execution | Worker registration, heartbeat monitoring, capability matching, and capacity-aware scheduling |
+| Supply-chain safety | Environment lockfiles, package verification, publisher trust, and secret-free configuration bundles |
+| Reproducibility | Audit hash chains, fault injection, regression baselines, and run-to-run comparison |
 
-当前包含 **95 个 ComfyUI 节点**，Manifest Schema 为 **1.6**。
+**v0.7.0 baseline:** 95 ComfyUI nodes, Manifest Schema 1.6, and 135 regression tests.
 
-## 重要边界
+## Workflow
 
-插件能固定输入、流程和审计记录，但不能保证任何视频模型达到像素级一致。最终结果仍取决于模型能力、参考图质量、模型版本、采样器、动作幅度和平台内部随机机制。
+```mermaid
+flowchart LR
+    A[Project / Cast / Location Locks] --> B[Batch Director / Take Variants]
+    B --> C[Reference Library / Model Profile / Workflow Template]
+    C --> D[Collaboration / Edit Lock / Review]
+    D --> E[Compatibility / Environment Lock / Generation Gate]
+    E --> F[Execution Plan / Persistent Queue / Worker Scheduling]
+    F --> G[Generation / Asset Index / Technical QC]
+    G --> H[Boundary Continuity / Targeted Regeneration]
+    H --> I[Final Assembly / Audit / Snapshot / Replay]
+```
 
-外部身份识别或质量模型只通过声明式指标映射接入；插件不执行第三方 JSON 中的代码，不读取或保存 API Key。
+## Installation
 
-## 安装
-
-在 `ComfyUI/custom_nodes` 中执行：
+Clone the repository into `ComfyUI/custom_nodes`:
 
 ```bash
 git clone https://github.com/xinjian0101/continuity-director.git ComfyUI-ContinuityDirector
 ```
 
-或将发布 ZIP 解压到：
+Or extract a release archive to:
 
 ```text
 ComfyUI/custom_nodes/ComfyUI-ContinuityDirector
 ```
 
-随后重启 ComfyUI。核心功能没有第三方 Python 运行依赖；视频探测、抽帧和拼接需要本机安装 FFmpeg/FFprobe。
+Restart ComfyUI after installation.
 
-## 推荐流程
+The core runtime is designed without mandatory third-party Python dependencies. Video probing, frame extraction, and assembly require local `FFmpeg` and `FFprobe` binaries.
 
-```text
-项目锁 / 演员表锁 / 场景锁
-  ↓
-批量导演 / Take 变体
-  ↓
-参考帧库 / 模型配置 / 工作流模板
-  ↓
-协作项目 → 编辑锁 → 审批与变更评审
-  ↓
-兼容矩阵 / 环境锁文件 / 生成放行门
-  ↓
-执行计划 / 持久队列 / 分布式调度
-  ↓
-生成 → 素材索引 → 技术质检 → 最佳 Take
-  ↓
-边界连续性 → 定向重做 → 成片拼接
-  ↓
-审计链 / 版本快照 / 重放比较 / 运行包
-```
+## Interface languages
 
-## v0.7 多人协作
+The v0.8 interface specification supports three display modes:
 
-成员角色：
+| Mode | Behavior |
+|---|---|
+| English | All labels, descriptions, status messages, and validation feedback are shown in English |
+| 中文 | All user-facing interface text is shown in Simplified Chinese |
+| Bilingual | English is shown as the primary label with Simplified Chinese as supporting text |
+
+Language selection is intended to be persistent per browser and must not modify workflow data or node identifiers.
+
+See [Interface and localization](docs/INTERFACE.md) for the implementation rules.
+
+## Collaboration model
+
+Supported production roles:
 
 ```text
 owner / director / editor / reviewer / operator / viewer
 ```
 
-协作流程支持：
+The collaboration layer is designed to:
 
-1. 对单个镜头、场景或成片获取有期限的编辑锁。
-2. 通过修订号阻止旧页面覆盖新修改。
-3. 提交审批、要求修改、批准、拒绝或废止版本。
-4. 对 JSON 资源执行三方合并并输出具体冲突路径。
-5. 使用 SHA-256 哈希链记录不可静默篡改的协作事件。
-6. 只有审批、锁、环境和审计条件都通过时才开放生成。
+1. Acquire time-limited locks for shots, scenes, or final assemblies.
+2. Prevent stale pages from overwriting newer revisions.
+3. Submit, approve, reject, revoke, or request changes to revisions.
+4. Perform three-way JSON merges and report exact conflict paths.
+5. Record collaboration events in a SHA-256 audit chain.
+6. Open the generation gate only when review, lock, environment, and audit conditions pass.
 
-## v0.7 分布式执行
+## Distributed execution
 
-工作节点可声明：
+Workers may declare capabilities such as:
 
 ```json
 {
@@ -94,9 +123,9 @@ owner / director / editor / reviewer / operator / viewer
 }
 ```
 
-调度器会结合任务优先级、依赖、模型、显存、标签和剩余容量进行确定性分配。失去心跳的工作节点会被标记为 `stale`。
+The scheduler can match tasks using priority, dependencies, model profile, VRAM, labels, and remaining capacity. Workers that stop reporting heartbeats are marked as `stale`.
 
-## 本地验证
+## Local validation
 
 ```bash
 python -m compileall -q .
@@ -104,9 +133,15 @@ python -m unittest discover -s tests -p "test_*.py"
 python scripts/validate_release.py
 ```
 
-当前回归套件：**135 项测试**。
+## Documentation
 
-## 目录
+- [Architecture](docs/ARCHITECTURE.md)
+- [Interface and localization](docs/INTERFACE.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+
+## Project structure
 
 ```text
 ComfyUI-ContinuityDirector/
@@ -124,6 +159,6 @@ ComfyUI-ContinuityDirector/
 └── docs/
 ```
 
-## 许可证
+## License
 
-MIT。
+Released under the [MIT License](LICENSE).

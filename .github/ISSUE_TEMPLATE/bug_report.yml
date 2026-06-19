@@ -1,0 +1,80 @@
+name: Bug report
+description: Report a reproducible problem in Continuity Director
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Remove secrets, personal data, and private production assets before submitting.
+  - type: input
+    id: version
+    attributes:
+      label: Continuity Director version
+      placeholder: 0.7.0 or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: comfyui
+    attributes:
+      label: ComfyUI version
+      placeholder: Commit SHA or release
+    validations:
+      required: true
+  - type: dropdown
+    id: interface_language
+    attributes:
+      label: Interface language
+      options:
+        - English
+        - 中文
+        - Bilingual
+        - Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem summary
+      description: Describe what failed and where it occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Open...
+        2. Configure...
+        3. Run...
+        4. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Paste sanitized logs or a minimal error trace.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I removed credentials, personal data, and private assets.
+          required: true
