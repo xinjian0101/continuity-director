@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let source = fs.readFileSync(path.join(root, "js", "continuity_director.js"), "utf8");
 source = source.replace('import { app } from "../../scripts/app.js";', "const app = globalThis.__app;");
-source = source.replace('new URL("./continuity_director.css",import.meta.url).href', '"continuity_director.css"');
+source = source.replace('new URL("./continuity_director.css", import.meta.url).href', '"continuity_director.css"');
 
 class FakeClassList {
   constructor() { this.values = new Set(); }
@@ -58,7 +58,7 @@ const makeNode = (type) => ({
   title: type,
   outputs: [],
   inputs: [],
-  size: [200, 120],
+  size: type === "CDCharacterLock" ? [320, 420] : type === "CDSceneLock" ? [300, 360] : type === "CDProjectLock" ? [300, 300] : [280, 220],
   connect() { return true; },
 });
 let extension;
@@ -92,9 +92,18 @@ globalThis.__app = {
   registerExtension(config) { extension = config; },
 };
 
+const overlaps = (a, b) => {
+  const [ax, ay] = a.pos;
+  const [aw, ah] = a.size;
+  const [bx, by] = b.pos;
+  const [bw, bh] = b.size;
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+};
+
 vm.runInThisContext(source, { filename: "continuity_director.js" });
 if (!extension) throw new Error("frontend extension was not registered");
 if (extension.name !== "continuity-director.dashboard") throw new Error("unexpected extension name");
+if (extension.aboutPageBadges?.[0]?.label !== "Continuity Director v0.8.22") throw new Error("frontend version badge is stale");
 await extension.setup();
 if (!sidebar.config || sidebar.config.type !== "custom") throw new Error("sidebar tab was not registered");
 const host = new FakeElement("aside");
@@ -104,4 +113,10 @@ const starter = extension.commands.find((item) => item.id === "continuity-direct
 if (!starter) throw new Error("starter command missing");
 starter.function();
 if (graphNodes.length !== 8) throw new Error(`starter chain created ${graphNodes.length} nodes instead of 8`);
-console.log("frontend smoke passed: sidebar rendered and starter chain created");
+for (let left = 0; left < graphNodes.length; left += 1) {
+  if (!Array.isArray(graphNodes[left].pos) || graphNodes[left].pos.length !== 2) throw new Error(`${graphNodes[left].type} has no position`);
+  for (let right = left + 1; right < graphNodes.length; right += 1) {
+    if (overlaps(graphNodes[left], graphNodes[right])) throw new Error(`starter nodes overlap: ${graphNodes[left].type} and ${graphNodes[right].type}`);
+  }
+}
+console.log("frontend smoke passed: sidebar rendered, version matched, and starter layout has no overlaps");
