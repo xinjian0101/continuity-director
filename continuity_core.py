@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import hmac
 import json
 import re
 from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Iterable
+
+from .strict_json_core import StrictJSONError, reject_json_constant, validate_json_value
 
 
 class ContinuityError(ValueError):
@@ -16,6 +19,9 @@ class ContinuityError(ValueError):
 
 
 _ID_RE = re.compile(r"[^a-zA-Z0-9._-]+")
+_VERSION_RE = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
+MAX_ID_LENGTH = 128
 
 
 def utc_now() -> str:
@@ -24,17 +30,59 @@ def utc_now() -> str:
 
 def normalize_id(value: Any, fallback: str = "item") -> str:
     text = str(value or "").strip()
-    text = _ID_RE.sub("-", text).strip("-._")
-    return text or fallback
+    text = _ID_RE.sub("-", text).strip("-._") or str(fallback or "item").strip() or "item"
+    if len(text) <= MAX_ID_LENGTH:
+        return text
+    suffix = hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+    return f"{text[: MAX_ID_LENGTH - 13]}-{suffix}"
+
+
+def require_id(value: Any, field: str, *, fallback: str | None = None) -> str:
+    if isinstance(value, (bool, bytes, bytearray, list, tuple, dict, set)):
+        raise ContinuityError(f"{field} must be a scalar identifier")
+    raw = str(value if value is not None else "").strip()
+    if not raw and fallback is None:
+        raise ContinuityError(f"{field} must not be empty")
+    normalized = normalize_id(raw, fallback or "")
+    if not normalized:
+        raise ContinuityError(f"{field} contains no valid identifier characters")
+    return normalized
+
+
+def require_schema_version(value: Any, field: str = "schema_version") -> str:
+    text = str(value or "").strip()
+    if not _VERSION_RE.fullmatch(text):
+        raise ContinuityError(f"{field} must use numeric dot notation such as 1.0 or 1.0.1")
+    return text
+
+
+def _validated_json(value: Any) -> Any:
+    try:
+        return validate_json_value(value)
+    except StrictJSONError as exc:
+        raise ContinuityError(str(exc)) from exc
 
 
 def stable_json(value: Any, *, indent: int | None = None) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":") if indent is None else None, indent=indent)
+    canonical = _validated_json(value)
+    return json.dumps(canonical, ensure_ascii=False, sort_keys=True, separators=(",", ":") if indent is None else None, indent=indent, allow_nan=False)
 
 
 def digest(value: Any) -> str:
     payload = value if isinstance(value, str) else stable_json(value)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def integrity_report(value: Any) -> dict[str, Any]:
+    data = _validated_json(value)
+    if not isinstance(data, dict):
+        raise ContinuityError("Hashed payload must be an object")
+    supplied = str(data.get("hash", "")).strip().lower()
+    body = copy.deepcopy(data)
+    body.pop("hash", None)
+    expected = digest(body)
+    valid_format = bool(_HASH_RE.fullmatch(supplied))
+    return {"valid": valid_format and hmac.compare_digest(supplied, expected), "valid_format": valid_format, "supplied": supplied, "expected": expected}
 
 
 def _expected_name(expected: type | tuple[type, ...]) -> str:
@@ -44,14 +92,17 @@ def _expected_name(expected: type | tuple[type, ...]) -> str:
 
 def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, ...] | None = None) -> Any:
     if value is None or (isinstance(value, str) and not value.strip()):
-        result = copy.deepcopy(default)
+        result = _validated_json(default)
     elif isinstance(value, str):
         try:
-            result = json.loads(value)
+            result = json.loads(value, parse_constant=reject_json_constant)
+        except StrictJSONError as exc:
+            raise ContinuityError(str(exc)) from exc
         except json.JSONDecodeError as exc:
             raise ContinuityError(f"Invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}") from exc
+        result = _validated_json(result)
     else:
-        result = copy.deepcopy(value)
+        result = _validated_json(value)
     if expected is not None and not isinstance(result, expected):
         raise ContinuityError(f"Expected {_expected_name(expected)}, received {type(result).__name__}")
     return result
@@ -112,13 +163,7 @@ def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
 
 def build_manifest(project: dict[str, Any], characters: list[dict[str, Any]] | None = None, scenes: list[dict[str, Any]] | None = None, shots: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     project_lock = _validated_lock(project, "project", 1)
-    manifest = {
-        "schema": "continuity-director/manifest@1.0",
-        "project": project_lock,
-        "characters": _lock_collection(characters, "character"),
-        "scenes": _lock_collection(scenes, "scene"),
-        "shots": _lock_collection(shots, "shot"),
-    }
+    manifest = {"schema": "continuity-director/manifest@1.0", "project": project_lock, "characters": _lock_collection(characters, "character"), "scenes": _lock_collection(scenes, "scene"), "shots": _lock_collection(shots, "shot")}
     manifest["hash"] = digest(manifest)
     return manifest
 
