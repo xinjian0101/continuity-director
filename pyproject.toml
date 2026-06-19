@@ -1,0 +1,24 @@
+[project]
+name = "continuity-director"
+version = "0.8.0"
+description = "Continuity locks, deterministic shot planning, quality gates, collaboration, and a bilingual production dashboard for ComfyUI."
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Multimedia :: Video",
+]
+
+[project.urls]
+Repository = "https://github.com/xinjian0101/continuity-director"
+Documentation = "https://github.com/xinjian0101/continuity-director#readme"
+"Bug Tracker" = "https://github.com/xinjian0101/continuity-director/issues"
+
+[tool.comfy]
+PublisherId = "xinjian0101"
+DisplayName = "Continuity Director"
+requires-comfyui = ">=0.3.0"
+Icon = "https://raw.githubusercontent.com/xinjian0101/continuity-director/main/assets/icon.svg"
+Banner = "https://raw.githubusercontent.com/xinjian0101/continuity-director/main/assets/banner.svg"

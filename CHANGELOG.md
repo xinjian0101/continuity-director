@@ -1,34 +1,23 @@
 # Changelog
 
-All notable changes to Continuity Director are documented in this file.
-
-## [Unreleased]
+## [0.8.0] - 2026-06-19
 
 ### Added
 
-- English GitHub project homepage.
-- English, Simplified Chinese, and bilingual interface specification.
-- Contribution, security, issue, and pull request templates.
-- Architecture and interface documentation.
+- Complete installable ComfyUI custom-node package.
+- 14 continuity, directing, quality, runtime, collaboration, and export nodes.
+- Native sidebar dashboard with a floating compatibility fallback.
+- English, Simplified Chinese, and bilingual interface modes.
+- Quick-add node library and connected starter production chain.
+- Deterministic JSON serialization and SHA-256 hashes.
+- Storyboard expansion, quality gates, Take ranking, execution waves, continuity reports, three-way merge, audit events, and package export.
+- Built-in node help pages, examples, tests, release validation, CI, registry metadata, icon, and banner.
 
 ### Changed
 
-- Reorganized project documentation around production workflows.
-- Clarified model-quality boundaries and external dependency requirements.
+- Replaced the documentation-only baseline with actual runtime source code.
+- Corrected the public feature list to match the implemented 14-node release.
 
 ## [0.7.0] - 2026-06-19
 
-### Added
-
-- Continuity locks for projects, characters, cast, locations, shots, state, and seeds.
-- Batch directing and take variation.
-- Persistent runtime queues, dependency scheduling, task leases, and recovery.
-- Reference-frame lifecycle and continuity handoff.
-- Technical quality review, take selection, and targeted regeneration.
-- Post-production probing, extraction, assembly, snapshots, diffs, rollback, and lineage.
-- Collaboration roles, edit locks, approvals, change requests, and generation gates.
-- Distributed workers, heartbeat monitoring, capability matching, and capacity scheduling.
-- Environment lockfiles, package verification, audit chains, and replay comparison.
-
-[Unreleased]: https://github.com/xinjian0101/continuity-director/compare/v0.7.0...HEAD
-[0.7.0]: https://github.com/xinjian0101/continuity-director/releases/tag/v0.7.0
+- Initial repository and architecture documentation baseline.
