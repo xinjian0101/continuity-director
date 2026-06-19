@@ -1,7 +1,7 @@
 """Reliability and package-governance nodes added after the initial v0.8 release."""
 from __future__ import annotations
 from .continuity_core import parse_json, stable_json
-from .validation_core import migrate_payload, queue_checkpoint, retry_policy, verify_hashed_payload
+from .validation_core import idempotency_key, migrate_payload, queue_checkpoint, retry_policy, verify_hashed_payload
 
 RELIABILITY = "Continuity Director/07 Reliability"
 
@@ -37,5 +37,12 @@ class CDQueueCheckpoint:
     def checkpoint(self,execution_plan,completed_ids_json,failed_ids_json):
         result=queue_checkpoint(execution_plan,completed_ids_json,failed_ids_json); return result,stable_json(result,indent=2),result["remaining_count"]
 
-NODE_CLASS_MAPPINGS={"CDVerifyPackage":CDVerifyPackage,"CDMigratePayload":CDMigratePayload,"CDRetryPolicy":CDRetryPolicy,"CDQueueCheckpoint":CDQueueCheckpoint}
-NODE_DISPLAY_NAME_MAPPINGS={"CDVerifyPackage":"CD · Verify Package","CDMigratePayload":"CD · Migrate Payload","CDRetryPolicy":"CD · Retry Policy","CDQueueCheckpoint":"CD · Queue Checkpoint"}
+class CDIdempotencyKey:
+    RETURN_TYPES=("STRING","STRING"); RETURN_NAMES=("idempotency_key","canonical_json"); FUNCTION="create"; CATEGORY=RELIABILITY
+    DESCRIPTION="Create a stable request key so repeated submissions can be recognized safely."
+    @classmethod
+    def INPUT_TYPES(cls): return {"required":{"namespace":("STRING",{"default":"generation"}),"payload_json":("STRING",{"default":"{}","multiline":True})}}
+    def create(self,namespace,payload_json): return idempotency_key(namespace,payload_json)
+
+NODE_CLASS_MAPPINGS={"CDVerifyPackage":CDVerifyPackage,"CDMigratePayload":CDMigratePayload,"CDRetryPolicy":CDRetryPolicy,"CDQueueCheckpoint":CDQueueCheckpoint,"CDIdempotencyKey":CDIdempotencyKey}
+NODE_DISPLAY_NAME_MAPPINGS={"CDVerifyPackage":"CD · Verify Package","CDMigratePayload":"CD · Migrate Payload","CDRetryPolicy":"CD · Retry Policy","CDQueueCheckpoint":"CD · Queue Checkpoint","CDIdempotencyKey":"CD · Idempotency Key"}
