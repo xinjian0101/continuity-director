@@ -2,12 +2,18 @@
 
 ## Unreleased
 
+### Added
+
+- Primary maintainer declaration, CODEOWNERS, governance policy, public roadmap, ecosystem-value documentation, adoption policy, release process, and code of conduct.
+- Structured opt-in adoption report form.
+- Automated maintainer-health validation with unit-test coverage.
+- Weekly maintainer-health workflow and GitHub Actions Dependabot configuration.
+
 ### Changed
 
-- Redesigned the GitHub repository homepage with live CI status, structured navigation, workflow diagrams, complete node maps, installation guidance, and contribution links.
-- Updated the repository banner to reflect 20 nodes, seven production stages, bilingual support, and verified builds.
-- Added a documentation hub and dedicated support page.
-- Added structured bug-report and feature-request forms plus a pull-request template.
+- Expanded the README with public stewardship, ecosystem value, dynamic activity badges, and maintenance links.
+- Updated the documentation hub and security support policy.
+- Added maintainer-health validation to the Python 3.10–3.12 CI matrix.
 
 ## [0.8.20] - 2026-06-19
 
@@ -26,6 +32,7 @@
 - Increased the registered node count from 14 to 20.
 - Expanded CI to Python 3.10–3.12, both frontend panels, release structure, and ZIP validation.
 - Updated the primary dashboard to expose reliability nodes and v0.8.20 status.
+- Redesigned the GitHub repository homepage and contribution flow.
 
 ## [0.8.0] - 2026-06-19
 

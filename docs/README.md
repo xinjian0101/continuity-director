@@ -1,6 +1,6 @@
 # Continuity Director Documentation
 
-This directory is the documentation hub for users, workflow authors, and contributors.
+This directory is the documentation hub for users, workflow authors, contributors, and maintainers.
 
 ## Start here
 
@@ -9,8 +9,14 @@ This directory is the documentation hub for users, workflow authors, and contrib
 | Install and run the plugin | [Repository README](../README.md#installation) |
 | Understand the production pipeline | [Repository README](../README.md#production-workflow) |
 | Review all nodes | [Repository README](../README.md#node-map) |
+| Understand ecosystem value | [Ecosystem value](ECOSYSTEM.md) |
+| Report adoption or compatibility | [Adoption evidence](ADOPTION.md) |
 | Learn the internal architecture | [Architecture](ARCHITECTURE.md) |
 | Implement interface changes | [Interface and localization](INTERFACE.md) |
+| Prepare a release | [Release process](RELEASING.md) |
+| Review project priorities | [Roadmap](../ROADMAP.md) |
+| Understand ownership | [Maintainers](../MAINTAINERS.md) |
+| Review decision rules | [Governance](../GOVERNANCE.md) |
 | Troubleshoot an installation | [Support](../SUPPORT.md) |
 | Contribute code or documentation | [Contributing](../CONTRIBUTING.md) |
 | Report a security issue | [Security policy](../SECURITY.md) |
@@ -26,11 +32,22 @@ This directory is the documentation hub for users, workflow authors, and contrib
 7. Apply execution, quality, and reliability controls.
 8. Export and verify the production package.
 
+## Maintainer workflow
+
+1. Triage public Issues and connect accepted work to the roadmap.
+2. Implement changes through pull requests.
+3. Run CI, release validation, and maintainer-health checks.
+4. Document behavior and compatibility changes.
+5. Merge only after checks pass.
+6. Follow the release checklist for tagged releases.
+7. Review adoption and compatibility evidence monthly while active.
+
 ## Developer validation
 
 ```bash
 python -m compileall -q .
 python scripts/smoke_import.py
+python scripts/maintainer_health.py
 PYTHONPATH=tests python -m unittest discover -s tests -p "test_*.py"
 python scripts/validate_release.py
 python scripts/build_release.py --check
@@ -40,8 +57,8 @@ node tests/reliability_frontend_smoke.mjs
 
 ## Documentation rules
 
-- Public-facing repository documentation is written in English.
-- Node help pages may include English and Simplified Chinese variants.
 - Public node identifiers and stored workflow keys must not be translated.
 - Behavior changes require matching tests and changelog entries.
+- Adoption claims require a verifiable source.
 - Examples must not contain credentials, private assets, or personal information.
+- Governance and supported-version changes require public pull requests.

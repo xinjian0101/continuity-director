@@ -1,0 +1,27 @@
+name: Maintainer health
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate maintainer health
+        run: python scripts/maintainer_health.py --format json | tee maintainer-health.json
+      - name: Upload health report
+        uses: actions/upload-artifact@v4
+        with:
+          name: maintainer-health
+          path: maintainer-health.json
+          if-no-files-found: error
+          retention-days: 30

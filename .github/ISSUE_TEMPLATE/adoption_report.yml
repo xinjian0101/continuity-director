@@ -1,0 +1,86 @@
+name: Adoption report
+description: Share a privacy-safe installation or workflow compatibility report
+title: "[Adoption]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for sharing verifiable usage information. Submit only information you are comfortable making public.
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: comfyui-version
+    attributes:
+      label: ComfyUI version
+      placeholder: Release or commit SHA
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: 3.10, 3.11, or 3.12
+    validations:
+      required: true
+  - type: dropdown
+    id: install-method
+    attributes:
+      label: Installation method
+      options:
+        - Git clone
+        - GitHub source ZIP
+        - Release ZIP
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: workflow-category
+    attributes:
+      label: Workflow category
+      options:
+        - Multi-shot AI video
+        - Character continuity
+        - Batch generation
+        - Quality review
+        - Collaboration and audit
+        - Reliability and recovery
+        - Research or evaluation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: usage
+    attributes:
+      label: How you use the project
+      description: Describe the nodes or workflow stages you use.
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility notes
+      description: Note what worked and any reproducible limitations.
+  - type: input
+    id: public-link
+    attributes:
+      label: Optional public project or workflow link
+      description: Do not submit private links or credentials.
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Publication consent
+      options:
+        - label: I understand this Issue is public and may be summarized in project adoption documentation.
+          required: true
+        - label: I removed credentials, personal data, and private production assets.
+          required: true
