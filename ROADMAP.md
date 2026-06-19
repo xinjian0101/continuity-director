@@ -5,19 +5,29 @@ This roadmap describes intended work. Priorities may change when compatibility, 
 ## Current status
 
 - Release line: `0.8.x`
-- Current release: `0.8.20`
+- Current release: `0.8.22`
 - Stability: maintained preview
 - Public nodes: 20
 - CI: Python 3.10, 3.11, and 3.12
 
-## v0.8.21
+## Completed: v0.8.21
 
-- Publish an installable GitHub Release with notes and checksum information.
-- Verify installation from the release artifact.
-- Record Windows and current ComfyUI compatibility evidence.
-- Document workflow save/reload and sidebar behavior.
+- Published an installable GitHub Release with notes and checksum information.
+- Verified installation from the release artifact.
+- Recorded Windows and current ComfyUI compatibility evidence.
+- Documented workflow save/reload and sidebar behavior.
 
 Tracking: Issues #9 and #10.
+
+## Completed: v0.8.22
+
+- Correct stale frontend version reporting.
+- Replace fixed starter-chain coordinates with size-aware layout.
+- Add frontend overlap regression coverage.
+- Derive release artifact names from the canonical `VERSION` file.
+- Publish a public bug audit and maintenance record.
+
+Tracking: Issue #17.
 
 ## v0.9.0
 
