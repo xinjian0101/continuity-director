@@ -9,15 +9,39 @@ const NODES = [
   ["CDEnvironmentLock", "Environment Lock", "环境锁"],
 ];
 
+const finitePair = (value) => Array.isArray(value)
+  && value.length >= 2
+  && Number.isFinite(Number(value[0]))
+  && Number.isFinite(Number(value[1]));
+
+const notify = (summary, detail = "", severity = "success") => {
+  app.extensionManager?.toast?.add?.({ severity, summary, detail, life: severity === "error" ? 4000 : 2000 });
+};
+
 const addNode = (type) => {
-  const node = window.LiteGraph?.createNode?.(type);
-  if (!node || !app.graph) return;
-  node.pos = Array.isArray(app.canvas?.graph_mouse) ? [...app.canvas.graph_mouse] : [200, 200];
-  app.graph.add(node);
-  app.canvas?.setDirty?.(true, true);
+  try {
+    const node = window.LiteGraph?.createNode?.(type);
+    if (!node || !app.graph?.add) throw new Error(`Unable to create ${type}`);
+    const cursor = app.canvas?.graph_mouse;
+    node.pos = finitePair(cursor) ? [Number(cursor[0]), Number(cursor[1])] : [200, 200];
+    const width = Number(node.size?.[0]);
+    const height = Number(node.size?.[1]);
+    node.size = [Number.isFinite(width) ? Math.max(width, 280) : 280, Number.isFinite(height) ? Math.max(height, 180) : 180];
+    node.color = node.color || "#0369a1";
+    node.bgcolor = node.bgcolor || "#102a43";
+    app.graph.add(node);
+    app.canvas?.setDirty?.(true, true);
+    notify("Reliability node added", node.title || type);
+    return true;
+  } catch (error) {
+    console.error("[Continuity Director] reliability node creation failed", type, error);
+    notify("Reliability node creation failed", String(error?.message || type), "error");
+    return false;
+  }
 };
 
 const render = (host) => {
+  if (!host?.replaceChildren) return;
   host.replaceChildren();
   const root = document.createElement("div");
   root.className = "cd-view";
@@ -28,7 +52,19 @@ const render = (host) => {
     const button = document.createElement("button");
     button.className = "cd-node-button";
     button.type = "button";
-    button.innerHTML = `<span class="cd-node-icon"><i class="pi pi-shield"></i></span><span class="cd-node-copy"><b>${en} / ${zh}</b><small>${type}</small></span><i class="pi pi-plus"></i>`;
+    const icon = document.createElement("span");
+    icon.className = "cd-node-icon";
+    icon.innerHTML = '<i class="pi pi-shield"></i>';
+    const copy = document.createElement("span");
+    copy.className = "cd-node-copy";
+    const label = document.createElement("b");
+    label.textContent = `${en} / ${zh}`;
+    const code = document.createElement("small");
+    code.textContent = type;
+    copy.append(label, code);
+    const plus = document.createElement("i");
+    plus.className = "pi pi-plus";
+    button.append(icon, copy, plus);
     button.addEventListener("click", () => addNode(type));
     root.append(button);
   }
@@ -57,15 +93,20 @@ app.registerExtension({
     },
   ],
   async setup() {
-    const visible = app.extensionManager?.setting?.get?.("ContinuityDirector.ShowReliabilityTab") ?? true;
-    if (!visible || !app.extensionManager?.registerSidebarTab) return;
-    app.extensionManager.registerSidebarTab({
-      id: "continuity-director-reliability",
-      icon: "pi pi-shield",
-      title: "CD Reliability",
-      tooltip: "Continuity Director reliability tools",
-      type: "custom",
-      render,
-    });
+    try {
+      const visible = app.extensionManager?.setting?.get?.("ContinuityDirector.ShowReliabilityTab") ?? true;
+      if (!visible || !app.extensionManager?.registerSidebarTab) return;
+      app.extensionManager.registerSidebarTab({
+        id: "continuity-director-reliability",
+        icon: "pi pi-shield",
+        title: "CD Reliability",
+        tooltip: "Continuity Director reliability tools",
+        type: "custom",
+        render,
+      });
+    } catch (error) {
+      console.error("[Continuity Director] reliability sidebar setup failed", error);
+      notify("Reliability sidebar setup failed", String(error?.message || error), "error");
+    }
   },
 });
