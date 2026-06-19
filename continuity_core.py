@@ -104,13 +104,21 @@ def _flatten(value: Any, prefix: str = "$") -> dict[str, Any]:
     return output
 
 
+def _path_is_ignored(path: str, ignored: tuple[str, ...]) -> bool:
+    for raw in ignored:
+        item = raw[:-2] if raw.endswith(".*") else raw
+        if path == item or path.startswith(f"{item}.") or path.startswith(f"{item}["):
+            return True
+    return False
+
+
 def continuity_diff(expected: Any, actual: Any, ignore_paths: Iterable[str] | None = None) -> list[dict[str, Any]]:
     ignored = tuple(path.strip() for path in (ignore_paths or []) if path.strip())
     left = _flatten(expected)
     right = _flatten(actual)
     issues: list[dict[str, Any]] = []
     for path in sorted(set(left) | set(right)):
-        if ignored and any(path == item or path.startswith(f"{item}.") for item in ignored):
+        if ignored and _path_is_ignored(path, ignored):
             continue
         if path not in left:
             issues.append({"path": path, "type": "unexpected", "actual": right[path]})
