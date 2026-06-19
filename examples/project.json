@@ -1,0 +1,10 @@
+{
+  "project_name": "地下车库短片",
+  "master_seed": 20260619,
+  "aspect_ratio": "9:16",
+  "fps": 24,
+  "visual_style": "cinematic realistic photography, natural skin texture, physically plausible lighting",
+  "color_palette": "cold gray with restrained red accents",
+  "lighting_rule": "stable cold ceiling light and red rim light from camera right",
+  "global_negative": "beauty filter, plastic skin, fashion editorial look"
+}

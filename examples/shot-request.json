@@ -1,0 +1,14 @@
+{
+  "shot_id": "shot-001",
+  "duration_seconds": 5,
+  "action": "the character walks carefully toward the damaged sedan and raises a flashlight",
+  "emotion": "restrained tension",
+  "dialogue": "",
+  "camera_shot": "medium shot",
+  "camera_move": "slow dolly in",
+  "lens": "35mm",
+  "composition": "character on left third, sedan in deep background, stable horizon",
+  "motion_rules": "natural walking pace, no sudden body morphing, hands remain anatomically stable",
+  "allowed_changes": "emotion, position",
+  "position": "near pillar B6, facing screen right"
+}

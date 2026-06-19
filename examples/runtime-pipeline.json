@@ -1,0 +1,41 @@
+{
+  "model_profile": {
+    "profile_id": "local-first-last-frame",
+    "transport": "local_workflow",
+    "supports_seed": true,
+    "supports_identity_reference": true,
+    "supports_first_frame": true,
+    "supports_last_frame": true,
+    "supports_negative_prompt": true,
+    "max_reference_images": 4,
+    "max_duration_seconds": 10,
+    "supported_fps": [24]
+  },
+  "reference_frames": [
+    {
+      "frame_id": "hero-face",
+      "source": "input/hero-face.png",
+      "role": "face",
+      "status": "approved",
+      "character_id": "hero-01",
+      "weight": 1.5
+    },
+    {
+      "frame_id": "shot-001-first",
+      "source": "input/shot-001-first.png",
+      "role": "first_frame",
+      "status": "approved",
+      "shot_id": "shot-001",
+      "weight": 1.2
+    }
+  ],
+  "retry_policy": {
+    "max_attempts": 3,
+    "seed_strategy": "stable_variant",
+    "backoff_seconds": [0, 2, 5],
+    "retryable_codes": ["timeout", "rate_limit", "provider_error", "oom"]
+  },
+  "extra_dependencies": [],
+  "max_parallel": 2,
+  "take_count": 2
+}

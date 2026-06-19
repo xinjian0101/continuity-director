@@ -1,0 +1,12 @@
+{
+  "character_id": "hero-01",
+  "display_name": "林默",
+  "identity_description": "20-year-old Chinese man, recognizable natural face, calm but alert expression",
+  "face_features": "oval face, straight eyebrows, single eyelids, medium nose bridge, small scar near right eyebrow",
+  "hair": "short slightly messy black hair, fixed length and parting",
+  "body_features": "slim athletic build, average height, fixed shoulder width and limb proportions",
+  "default_wardrobe": "dark charcoal hooded jacket, washed black T-shirt, dark cargo pants, worn black sneakers",
+  "signature_props": "silver analog watch on left wrist",
+  "immutable_rules": "scar remains on right eyebrow, watch remains on left wrist, no wardrobe redesign",
+  "reference_image_url": ""
+}

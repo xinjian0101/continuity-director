@@ -1,0 +1,54 @@
+{
+  "media_probe": {
+    "media_path": "output/shot-001.mp4",
+    "include_file_hash": true
+  },
+  "frame_extraction": {
+    "mode": "boundary",
+    "sample_count": 2,
+    "image_format": "png"
+  },
+  "technical_policy": {
+    "min_width": 720,
+    "min_height": 1280,
+    "min_fps": 24,
+    "require_video": true,
+    "require_audio": false,
+    "max_black_frame_ratio": 0.02,
+    "max_freeze_ratio": 0.1
+  },
+  "identity_adapter": {
+    "adapter_id": "external-face-model",
+    "metrics": {
+      "identity_similarity": {
+        "path": "face.similarity",
+        "scale": "0-1",
+        "required": true
+      }
+    }
+  },
+  "boundary_thresholds": {
+    "identity_similarity": 80,
+    "composition_match": 65,
+    "lighting_match": 70,
+    "color_match": 70,
+    "motion_continuity": 65,
+    "overall": 72
+  },
+  "assembly": {
+    "strategy": "transcode",
+    "video_codec": "libx264",
+    "audio_codec": "aac",
+    "target_fps": 24
+  },
+  "quota": {
+    "limits": {
+      "tasks": 100,
+      "concurrent_tasks": 2,
+      "gpu_seconds": 3600,
+      "estimated_cost": 20,
+      "storage_bytes": 10737418240,
+      "remakes": 20
+    }
+  }
+}
