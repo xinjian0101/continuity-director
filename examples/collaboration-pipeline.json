@@ -1,0 +1,31 @@
+{
+  "collaboration": {
+    "project_id": "short-drama-01",
+    "created_by": "owner",
+    "members": [
+      {"member_id": "owner", "role": "owner"},
+      {"member_id": "director", "role": "director"},
+      {"member_id": "editor", "role": "editor"},
+      {"member_id": "reviewer", "role": "reviewer"},
+      {"member_id": "gpu-operator", "role": "operator"}
+    ],
+    "policy": {
+      "minimum_approvals": 1,
+      "allow_self_approval": false,
+      "lock_ttl_seconds": 900
+    }
+  },
+  "worker": {
+    "worker_id": "gpu-worker-01",
+    "capabilities": {
+      "model_profiles": ["wan-i2v"],
+      "transports": ["local_workflow"],
+      "vram_gb": 24
+    },
+    "capacity": 1
+  },
+  "release_gate": {
+    "required_resource_ids": ["shot-001", "shot-002"],
+    "requirements": ["approved", "no_active_edit_lock", "compatible_environment", "valid_audit_chain"]
+  }
+}

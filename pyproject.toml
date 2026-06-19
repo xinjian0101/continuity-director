@@ -1,0 +1,26 @@
+[project]
+name = "continuity-director"
+version = "0.7.0"
+description = "Deterministic AI-video continuity, orchestration, QC, post-production governance and collaboration for ComfyUI."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+classifiers = [
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License"
+]
+
+[project.urls]
+Repository = "https://github.com/xinjian0101/continuity-director"
+Documentation = "https://github.com/xinjian0101/continuity-director#readme"
+"Bug Tracker" = "https://github.com/xinjian0101/continuity-director/issues"
+
+[tool.comfy]
+PublisherId = "xinjian0101"
+DisplayName = "Continuity Director"
+Icon = "https://raw.githubusercontent.com/xinjian0101/continuity-director/main/icon.svg"
+
+[tool.ruff]
+line-length = 120
