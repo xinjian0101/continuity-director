@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
+from .lock_integrity_core import LockIntegrityError, build_lock_record, validate_lock_record, validate_manifest_references
 from .strict_json_core import StrictJSONError, reject_json_constant, validate_json_value
 
 
@@ -125,23 +126,20 @@ def split_csv(value: str | Iterable[str] | None) -> list[str]:
 
 
 def build_lock(kind: str, item_id: str, payload: dict[str, Any], *, schema_version: str = "1.0") -> dict[str, Any]:
-    clean_kind = normalize_id(kind, "lock")
-    clean_id = normalize_id(item_id, clean_kind)
-    body = {"schema": f"continuity-director/{clean_kind}@{schema_version}", "kind": clean_kind, "id": clean_id, "data": copy.deepcopy(payload)}
-    body["hash"] = digest(body)
-    return body
+    clean_kind = require_id(kind, "lock kind", fallback="lock")
+    clean_id = require_id(item_id, "lock id", fallback=clean_kind)
+    version = require_schema_version(schema_version)
+    try:
+        return build_lock_record(clean_kind, clean_id, payload, version)
+    except LockIntegrityError as exc:
+        raise ContinuityError(str(exc)) from exc
 
 
 def _validated_lock(value: Any, kind: str, position: int) -> dict[str, Any]:
-    if not isinstance(value, dict):
-        raise ContinuityError(f"{kind.title()} lock {position} must be an object")
-    item_id = str(value.get("id", "")).strip()
-    if not item_id:
-        raise ContinuityError(f"{kind.title()} lock {position} is missing id")
-    supplied_kind = str(value.get("kind", kind)).strip()
-    if supplied_kind and supplied_kind != kind:
-        raise ContinuityError(f"Expected {kind} lock, received {supplied_kind} at position {position}")
-    return copy.deepcopy(value)
+    try:
+        return validate_lock_record(value, kind, position)
+    except LockIntegrityError as exc:
+        raise ContinuityError(str(exc)) from exc
 
 
 def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
@@ -153,7 +151,7 @@ def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
     seen: set[str] = set()
     for position, value in enumerate(values, start=1):
         item = _validated_lock(value, kind, position)
-        item_id = normalize_id(item["id"], kind)
+        item_id = item["id"]
         if item_id in seen:
             raise ContinuityError(f"Duplicate {kind} lock id: {item_id}")
         seen.add(item_id)
@@ -163,7 +161,14 @@ def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
 
 def build_manifest(project: dict[str, Any], characters: list[dict[str, Any]] | None = None, scenes: list[dict[str, Any]] | None = None, shots: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     project_lock = _validated_lock(project, "project", 1)
-    manifest = {"schema": "continuity-director/manifest@1.0", "project": project_lock, "characters": _lock_collection(characters, "character"), "scenes": _lock_collection(scenes, "scene"), "shots": _lock_collection(shots, "shot")}
+    character_locks = _lock_collection(characters, "character")
+    scene_locks = _lock_collection(scenes, "scene")
+    shot_locks = _lock_collection(shots, "shot")
+    try:
+        validate_manifest_references(project_lock, character_locks, scene_locks, shot_locks)
+    except LockIntegrityError as exc:
+        raise ContinuityError(str(exc)) from exc
+    manifest = {"schema": "continuity-director/manifest@1.0", "project": project_lock, "characters": character_locks, "scenes": scene_locks, "shots": shot_locks}
     manifest["hash"] = digest(manifest)
     return manifest
 
