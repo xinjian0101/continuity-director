@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -59,8 +60,17 @@ def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, 
 def split_csv(value: str | Iterable[str] | None) -> list[str]:
     if value is None:
         return []
-    parts = re.split(r"[,;\n]", value) if isinstance(value, str) else list(value)
-    return [str(item).strip() for item in parts if str(item).strip()]
+    if isinstance(value, (bytes, bytearray, Mapping)):
+        raise ContinuityError("CSV input must be a string or an iterable of scalar values")
+    parts = re.split(r"[,;\r\n]+", value) if isinstance(value, str) else list(value)
+    output: list[str] = []
+    seen: set[str] = set()
+    for item in parts:
+        text = str(item).strip()
+        if text and text not in seen:
+            seen.add(text)
+            output.append(text)
+    return output
 
 
 def build_lock(kind: str, item_id: str, payload: dict[str, Any], *, schema_version: str = "1.0") -> dict[str, Any]:
