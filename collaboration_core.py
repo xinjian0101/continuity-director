@@ -10,6 +10,29 @@ from .continuity_core import parse_json
 _MISSING = object()
 
 
+def _conflict_value(value: Any) -> tuple[bool, Any]:
+    if value is _MISSING:
+        return False, None
+    return True, copy.deepcopy(value)
+
+
+def _record_conflict(path: str, base: Any, current: Any, incoming: Any, conflicts: list[dict[str, Any]], kind: str) -> None:
+    base_exists, base_value = _conflict_value(base)
+    current_exists, current_value = _conflict_value(current)
+    incoming_exists, incoming_value = _conflict_value(incoming)
+    conflicts.append({
+        "path": path,
+        "kind": kind,
+        "base": base_value,
+        "current": current_value,
+        "incoming": incoming_value,
+        "base_exists": base_exists,
+        "current_exists": current_exists,
+        "incoming_exists": incoming_exists,
+        "resolution": "current",
+    })
+
+
 def _merge(base: Any, current: Any, incoming: Any, path: str, conflicts: list[dict[str, Any]]) -> Any:
     if current == incoming:
         return copy.deepcopy(current)
@@ -30,19 +53,19 @@ def _merge(base: Any, current: Any, incoming: Any, path: str, conflicts: list[di
                 elif i is _MISSING or c == i:
                     result[key] = copy.deepcopy(c)
                 else:
-                    conflicts.append({"path": child_path, "base": None, "current": c, "incoming": i})
+                    _record_conflict(child_path, b, c, i, conflicts, "concurrent-add")
                     result[key] = copy.deepcopy(c)
             elif c is _MISSING:
                 if i != b:
-                    conflicts.append({"path": child_path, "base": b, "current": None, "incoming": i})
+                    _record_conflict(child_path, b, c, i, conflicts, "delete-vs-change")
             elif i is _MISSING:
                 if c != b:
-                    conflicts.append({"path": child_path, "base": b, "current": c, "incoming": None})
+                    _record_conflict(child_path, b, c, i, conflicts, "change-vs-delete")
                     result[key] = copy.deepcopy(c)
             else:
                 result[key] = _merge(b, c, i, child_path, conflicts)
         return result
-    conflicts.append({"path": path, "base": base, "current": current, "incoming": incoming})
+    _record_conflict(path, base, current, incoming, conflicts, "value-change")
     return copy.deepcopy(current)
 
 

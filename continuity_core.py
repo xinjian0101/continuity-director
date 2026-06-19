@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import re
+from collections.abc import Mapping
 from datetime import datetime, timezone
 from typing import Any, Iterable
 
@@ -36,8 +37,13 @@ def digest(value: Any) -> str:
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
+def _expected_name(expected: type | tuple[type, ...]) -> str:
+    values = expected if isinstance(expected, tuple) else (expected,)
+    return " or ".join(getattr(item, "__name__", str(item)) for item in values)
+
+
 def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, ...] | None = None) -> Any:
-    if value is None or value == "":
+    if value is None or (isinstance(value, str) and not value.strip()):
         result = copy.deepcopy(default)
     elif isinstance(value, str):
         try:
@@ -47,16 +53,24 @@ def parse_json(value: Any, *, default: Any = None, expected: type | tuple[type, 
     else:
         result = copy.deepcopy(value)
     if expected is not None and not isinstance(result, expected):
-        expected_name = getattr(expected, "__name__", str(expected))
-        raise ContinuityError(f"Expected {expected_name}, received {type(result).__name__}")
+        raise ContinuityError(f"Expected {_expected_name(expected)}, received {type(result).__name__}")
     return result
 
 
 def split_csv(value: str | Iterable[str] | None) -> list[str]:
     if value is None:
         return []
-    parts = re.split(r"[,;\n]", value) if isinstance(value, str) else list(value)
-    return [str(item).strip() for item in parts if str(item).strip()]
+    if isinstance(value, (bytes, bytearray, Mapping)):
+        raise ContinuityError("CSV input must be a string or an iterable of scalar values")
+    parts = re.split(r"[,;\r\n]+", value) if isinstance(value, str) else list(value)
+    output: list[str] = []
+    seen: set[str] = set()
+    for item in parts:
+        text = str(item).strip()
+        if text and text not in seen:
+            seen.add(text)
+            output.append(text)
+    return output
 
 
 def build_lock(kind: str, item_id: str, payload: dict[str, Any], *, schema_version: str = "1.0") -> dict[str, Any]:
@@ -67,8 +81,44 @@ def build_lock(kind: str, item_id: str, payload: dict[str, Any], *, schema_versi
     return body
 
 
+def _validated_lock(value: Any, kind: str, position: int) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ContinuityError(f"{kind.title()} lock {position} must be an object")
+    item_id = str(value.get("id", "")).strip()
+    if not item_id:
+        raise ContinuityError(f"{kind.title()} lock {position} is missing id")
+    supplied_kind = str(value.get("kind", kind)).strip()
+    if supplied_kind and supplied_kind != kind:
+        raise ContinuityError(f"Expected {kind} lock, received {supplied_kind} at position {position}")
+    return copy.deepcopy(value)
+
+
+def _lock_collection(values: Any, kind: str) -> list[dict[str, Any]]:
+    if values is None:
+        return []
+    if not isinstance(values, (list, tuple)):
+        raise ContinuityError(f"{kind.title()} locks must be a list")
+    output: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for position, value in enumerate(values, start=1):
+        item = _validated_lock(value, kind, position)
+        item_id = normalize_id(item["id"], kind)
+        if item_id in seen:
+            raise ContinuityError(f"Duplicate {kind} lock id: {item_id}")
+        seen.add(item_id)
+        output.append(item)
+    return output
+
+
 def build_manifest(project: dict[str, Any], characters: list[dict[str, Any]] | None = None, scenes: list[dict[str, Any]] | None = None, shots: list[dict[str, Any]] | None = None) -> dict[str, Any]:
-    manifest = {"schema": "continuity-director/manifest@1.0", "project": copy.deepcopy(project), "characters": copy.deepcopy(characters or []), "scenes": copy.deepcopy(scenes or []), "shots": copy.deepcopy(shots or [])}
+    project_lock = _validated_lock(project, "project", 1)
+    manifest = {
+        "schema": "continuity-director/manifest@1.0",
+        "project": project_lock,
+        "characters": _lock_collection(characters, "character"),
+        "scenes": _lock_collection(scenes, "scene"),
+        "shots": _lock_collection(shots, "shot"),
+    }
     manifest["hash"] = digest(manifest)
     return manifest
 
@@ -90,13 +140,21 @@ def _flatten(value: Any, prefix: str = "$") -> dict[str, Any]:
     return output
 
 
+def _path_is_ignored(path: str, ignored: tuple[str, ...]) -> bool:
+    for raw in ignored:
+        item = raw[:-2] if raw.endswith(".*") else raw
+        if path == item or path.startswith(f"{item}.") or path.startswith(f"{item}["):
+            return True
+    return False
+
+
 def continuity_diff(expected: Any, actual: Any, ignore_paths: Iterable[str] | None = None) -> list[dict[str, Any]]:
     ignored = tuple(path.strip() for path in (ignore_paths or []) if path.strip())
     left = _flatten(expected)
     right = _flatten(actual)
     issues: list[dict[str, Any]] = []
     for path in sorted(set(left) | set(right)):
-        if ignored and any(path == item or path.startswith(f"{item}.") for item in ignored):
+        if ignored and _path_is_ignored(path, ignored):
             continue
         if path not in left:
             issues.append({"path": path, "type": "unexpected", "actual": right[path]})
